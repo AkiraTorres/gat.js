@@ -9,13 +9,6 @@ student_blueprint = Blueprint('alunos', __name__)
 def create_aluno():
     dados_aluno = request.json
 
-    nome = request.json.get("nome")
-    cpf = request.json.get("cpf")
-    arg_class = request.json.get("arg_class")
-    ano_entrada = request.json.get("ano_entrada")
-
-
-    # novo_aluno = Aluno(nome, cpf, arg_class, ano_entrada)
     novo_aluno = Aluno(dados_aluno)
     db.session.add(novo_aluno)
     db.session.commit()
