@@ -11,6 +11,7 @@ from models.Historico import Historico
 
 # imports das rotas
 from routes.student_blueprint import student_blueprint
+from routes.subject_blueprint import subject_blueprint
 
 app = Flask(__name__)
 env_config = os.getenv("APP_SETTINGS", "configs.config.DevelopmentConfig")
@@ -24,14 +25,7 @@ historico = db.relationship('Historico', backref='aluno', cascade='all, delete-o
 
 
 app.register_blueprint(student_blueprint)
-
-
-@app.route("/disciplinas", methods=["GET"])
-def list_disciplinas():
-    disciplinas_list = Disciplina.query.all()
-    response = make_response([disc.to_json() for disc in disciplinas_list])
-    return response
-
+app.register_blueprint(subject_blueprint)
 
 @app.route('/historico', methods=['GET'])
 def encontrar_todos_historicos():
