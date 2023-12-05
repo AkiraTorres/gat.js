@@ -20,16 +20,20 @@ $ ./venv/Scripts/activate
 $ pip install -r requirements.txt
 ```
 
-### configurar o arquivo .env
+### copiar o arquivo .env.example como .env e setar suas variáveis de conexão com o db
 
-### se não existente, criar a base de dados e rodar as migrations
+```python
+DB_NAME=""     # nome da database que o projeto vai acessar
+DB_USER=""     # nome do usuário que acessa o db
+DB_PASS=       # senha do usuário que acessa o db
+DB_PORT=5432   # porta da aplicação do postgresql, a porta padrão é 5432
+```
+
+### rodar as migrations se as tabelas ainda não existem no banco de dados e após isso executar o script de inserção de dados na base
 
 ```bash
 $ flask --app ./src/app.py migrate upgrade
 ```
-
-### e após executar o script de inserção de dados na base
-
 
 ### finalmente executar a aplicação
 
