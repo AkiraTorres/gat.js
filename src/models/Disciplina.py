@@ -10,12 +10,13 @@ class Disciplina(db.Model):
     credito = db.Column(db.Integer)
     tipo = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, codigo, nome, carga_horaria, credito, tipo):
-        self.codigo = codigo
-        self.nome = nome
-        self.carga_horaria = carga_horaria
-        self.credito = credito
-        self.tipo = tipo
+    def __init__(self, dados):
+        self.carga_horaria = dados.get("carga_horaria")
+        self.codigo = dados.get("codigo")
+        self.credito = dados.get("credito")
+        self.nome = dados.get("nome")
+        self.tipo = dados.get("tipo")
+
 
     def to_json(self) -> dict:
         return {
