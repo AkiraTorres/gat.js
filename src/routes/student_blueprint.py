@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, make_response
 from models.db import db
 from models.Aluno import Aluno
 
+# cria o blueprint do aluno
 student_blueprint = Blueprint('alunos', __name__)
 
 # rota para criar um aluno 
