@@ -11,6 +11,7 @@ from models.Historico import Historico
 
 # imports das rotas
 from routes.student_blueprint import student_blueprint
+from routes.historic_blueprint import historic_blueprint
 from routes.subject_blueprint import subject_blueprint
 
 app = Flask(__name__)
@@ -25,14 +26,8 @@ historico = db.relationship('Historico', backref='aluno', cascade='all, delete-o
 
 
 app.register_blueprint(student_blueprint)
+app.register_blueprint(historic_blueprint)
 app.register_blueprint(subject_blueprint)
-
-@app.route('/historico', methods=['GET'])
-def encontrar_todos_historicos():
-    historicos = Historico.query.all()
-    response = make_response([historico.to_json() for historico in historicos])
-    return response
-
 
 if __name__ == "__main__":
     app.run()

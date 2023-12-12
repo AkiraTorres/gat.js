@@ -10,13 +10,13 @@ class Historico(db.Model):
     semestre = db.Column(db.Integer, nullable=False)
     nota = db.Column(db.DECIMAL(5, 2), nullable=True)
 
-    def __init__(self, id_aluno, id_disciplina, status, ano, semestre, nota):
-        self.id_aluno = id_aluno
-        self.id_disciplina = id_disciplina
-        self.status = status
-        self.ano = ano
-        self.semestre = semestre
-        self.nota = nota
+    def __init__(self, dados):
+        self.id_aluno = dados.get('id_aluno')
+        self.id_disciplina = dados.get('id_disciplina')
+        self.status = dados.get('status')
+        self.ano = dados.get('ano')
+        self.semestre = dados.get('semestre')
+        self.nota = dados.get('nota')
 
     def to_json(self) -> dict:
         return {

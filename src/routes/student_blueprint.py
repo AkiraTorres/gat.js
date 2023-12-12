@@ -1,14 +1,15 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, jsonify, request, make_response
 from models.db import db
 from models.Aluno import Aluno
 
 student_blueprint = Blueprint('alunos', __name__)
 
-#rota para criar um aluno 
+# rota para criar um aluno 
 @student_blueprint.route('/alunos', methods=['POST'])
 def create_aluno():
     dados_aluno = request.json
 
+    # novo_aluno = Aluno(nome, cpf, arg_class, ano_entrada)
     novo_aluno = Aluno(dados_aluno)
     db.session.add(novo_aluno)
     db.session.commit()
