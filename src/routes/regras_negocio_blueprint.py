@@ -6,13 +6,11 @@ regras_negocio_blueprint = Blueprint('regrasNegocio', __name__)
 
 @regras_negocio_blueprint.route("/taxa_reprovacao/<int:id_disciplina>", methods=["GET"])
 def get_taxa_reprovacao_disciplina(id_disciplina):
-
     try:
         query_reprovados = Historico.query.filter(
             Historico.id_disciplina == id_disciplina,
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
-
 
         query_total_alunos = Historico.query.filter(
             Historico.id_disciplina == id_disciplina
