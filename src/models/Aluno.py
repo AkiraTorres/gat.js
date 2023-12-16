@@ -3,9 +3,9 @@ from models.db import db
 class Aluno(db.Model):
     __tablename__ = "aluno"
 
-    id = db.Column(db.Integer, primary_key=True)
+    # id = db.Column(db.Integer, primary_key=True)  # id do aluno removido
     nome = db.Column(db.String(60), nullable=False)
-    cpf = db.Column(db.String(14), nullable=False, unique=True)
+    cpf = db.Column(db.String(14), nullable=False, unique=True, primary_key=True)  # cpf como primary key, pois a bd foi alterado
     arg_class = db.Column(db.DECIMAL(5, 2), nullable=False)
     ano_entrada = db.Column(db.Integer, nullable=False)
 
@@ -17,7 +17,7 @@ class Aluno(db.Model):
 
     def to_json(self) -> dict:
         return {
-            "id": self.id,
+            # "id": self.id,  # removido id do aluno
             "nome": self.nome,
             "cpf": self.cpf,
             "arg_class": self.arg_class,

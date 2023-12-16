@@ -29,9 +29,11 @@ def list_alunos():
 
 
 # encontrar aluno por id
-@student_blueprint.route("/alunos/<user_id>", methods=["GET"])
-def get_aluno_by_id(user_id):
-    aluno = Aluno.query.get(user_id)
+@student_blueprint.route("/alunos/<cpf>", methods=["GET"])
+def get_aluno_by_cpf(cpf):
+
+    aluno = Aluno.query.get(cpf)
+
     if not aluno:
         response = make_response({'message': 'Aluno não encontrado'})
         response.status_code = 404
@@ -42,9 +44,9 @@ def get_aluno_by_id(user_id):
 
 
 # Atualizar aluno por id
-@student_blueprint.route('/alunos/<int:aluno_id>', methods=['PUT'])
-def update_aluno(aluno_id):
-    aluno = Aluno.query.get(aluno_id)
+@student_blueprint.route('/alunos/<cpf>', methods=['PUT'])
+def update_aluno(cpf):
+    aluno = Aluno.query.get(cpf)
 
     if not aluno:
         response = make_response({'message': 'Aluno não encontrado'})
@@ -54,7 +56,7 @@ def update_aluno(aluno_id):
     dados_atualizados = request.json
 
     aluno.nome = dados_atualizados.get('nome', aluno.nome)
-    aluno.cpf = dados_atualizados.get('cpf', aluno.cpf)
+    # aluno.cpf = dados_atualizados.get('cpf', aluno.cpf)  # não atualizar o cpf, pois é a chave primária
     aluno.arg_class = dados_atualizados.get('arg_class', aluno.arg_class)
     aluno.ano_entrada = dados_atualizados.get('ano_entrada', aluno.ano_entrada)
 
@@ -65,9 +67,9 @@ def update_aluno(aluno_id):
 
 
 # Deletar aluno por id
-@student_blueprint.route('/alunos/<int:aluno_id>', methods=['DELETE'])
-def delete_aluno(aluno_id):
-    aluno = Aluno.query.get(aluno_id)
+@student_blueprint.route('/alunos/<cpf>', methods=['DELETE'])
+def delete_aluno_por_cpf(cpf):
+    aluno = Aluno.query.get(cpf)
 
     if not aluno:
         response = make_response({'message': 'Aluno não encontrado'})

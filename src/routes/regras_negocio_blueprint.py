@@ -13,6 +13,7 @@ def get_taxa_reprovacao_disciplina(id_disciplina):
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
+
         query_total_alunos = Historico.query.filter(
             Historico.id_disciplina == id_disciplina
         ).count()
