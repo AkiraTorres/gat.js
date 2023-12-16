@@ -1,6 +1,7 @@
 from flask import Blueprint, request, make_response
 from models.db import db
 from models.Disciplina import Disciplina
+from models.Historico import Historico
 
 subject_blueprint = Blueprint('disciplinas', __name__)
 
