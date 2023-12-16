@@ -79,15 +79,12 @@ def get_taxa_sucesso_ano(ano):
 @regras_negocio_blueprint.route("/taxa_aprovacao_global", methods=["GET"])
 def get_taxa_aprovacao_global():
     try:
-        # Contagem de alunos aprovados
         query_aprovados = Historico.query.filter(
             (Historico.status == 1) | (Historico.status == 2)
         ).count()
 
-        # Contagem total de alunos
         query_total_alunos = Historico.query.count()
 
-        # Calcular a taxa de aprovação global
         if query_total_alunos > 0:
             taxa_aprovacao_global = (query_aprovados / query_total_alunos) * 100
         else:
@@ -105,7 +102,7 @@ def get_taxa_aprovacao_global():
     except Exception as e:
         response_data = {"error": str(e)}
         response = make_response(response_data)
-        response.status_code = 500  # Internal Server Error
+        response.status_code = 500
 
     return response
 
@@ -119,12 +116,10 @@ def get_taxa_retencao(ano):
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
-        # Contagem total de alunos no ano
         query_total_alunos = Historico.query.filter(
             Historico.ano == ano
         ).count()
 
-        # Calcular a taxa de retenção
         if query_total_alunos > 0:
             taxa_retencao = (query_retidos / query_total_alunos) * 100
         else:
