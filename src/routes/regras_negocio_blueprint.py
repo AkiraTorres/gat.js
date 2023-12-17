@@ -4,6 +4,7 @@ from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Professor import Professor
 from models.db import db
+from models.Aluno import Aluno
 
 regras_negocio_blueprint = Blueprint('regrasNegocio', __name__)
 
@@ -172,7 +173,6 @@ def carga_horaria_total_professor(id_matricula):
 @regras_negocio_blueprint.route("/disciplinas_que_mais_reprovaram/<int:ano>/<int:semestre>", methods=["GET"])
 def disciplinas_que_mais_reprovaram(ano, semestre):
     try:
-        # Consulta ao banco de dados usando SQLAlchemy
         disciplinas_reprovadas = db.session.query(
             Disciplina.id.label('id_disciplina'),
             Disciplina.codigo.label('codigo_disciplina'),
@@ -187,7 +187,6 @@ def disciplinas_que_mais_reprovaram(ano, semestre):
             Historico.semestre == semestre
         ).group_by(Disciplina.id).order_by(db.desc('total_reprovacoes')).limit(5).all()
 
-        # Formatar os resultados em um formato serializável
         resultados = []
         for disciplina in disciplinas_reprovadas:
             resultado = {
@@ -196,6 +195,37 @@ def disciplinas_que_mais_reprovaram(ano, semestre):
                 "nome_disciplina": disciplina.nome_disciplina,
                 "carga_horaria_disciplina": disciplina.carga_horaria_disciplina,
                 "total_reprovacoes": disciplina.total_reprovacoes
+            }
+            resultados.append(resultado)
+
+        response_data = {"resultados": resultados}
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500
+
+    return response
+
+
+@regras_negocio_blueprint.route("/alunos_matriculados", methods=["GET"])
+def alunos_matriculados():
+    try:
+        alunos_matriculados = Aluno.query.join(
+            Historico, Aluno.cpf == Historico.cpf_aluno
+        ).filter(
+            Historico.status == 1
+        ).all()
+
+        resultados = []
+        for aluno in alunos_matriculados:
+            resultado = {
+                "cpf": aluno.cpf,
+                "nome": aluno.nome,
+                "arg_class": aluno.arg_class,
+                "ano_entrada": aluno.ano_entrada,
             }
             resultados.append(resultado)
 
