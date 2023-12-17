@@ -3,7 +3,7 @@ from models.db import db
 class Historico(db.Model):
     __tablename__ = "historico"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     cpf_aluno = db.Column(db.String(14), db.ForeignKey('aluno.cpf'), primary_key=True)  # Alterei de Integer para String para poder fazer a relação com a tabela aluno
     id_disciplina = db.Column(db.Integer, db.ForeignKey('disciplina.id'), primary_key=True)
     status = db.Column(db.Integer, nullable=False)
@@ -12,7 +12,6 @@ class Historico(db.Model):
     nota = db.Column(db.DECIMAL(5, 2), nullable=True)
 
     def __init__(self, dados):
-        self.id = dados.get('id')
         self.cpf_aluno = dados.get('cpf_aluno')
         self.id_disciplina = dados.get('id_disciplina')
         self.status = dados.get('status')

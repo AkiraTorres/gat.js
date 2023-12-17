@@ -9,7 +9,7 @@ historic_blueprint = Blueprint('historico', __name__)
 
 # listar historico escolar 
 @historic_blueprint.route('/historico', methods=['GET'])
-def find_():
+def list_all_historic():
     historicos = Historico.query.all()
     response = make_response([historico.to_json() for historico in historicos])
     return response
@@ -61,6 +61,7 @@ def get_historic_by_ids(id_aluno, id_disciplina):
         response.status_code = 200
 
     return response
+
 
 @historic_blueprint.route("/alunos_matriculados", methods=["GET"])
 def alunos_matriculados():
@@ -192,4 +193,24 @@ def get_taxa_sucesso_ano(ano):
         response = make_response(response_data)
         response.status_code = 500  # Internal Server Error
 
+    return response
+
+
+@historic_blueprint.route('/historico', methods=['POST'])
+def create_historic():
+    try:
+        new_historic = Historico(request.json)
+
+        db.session.add(new_historic)
+        db.session.commit()
+
+        response_data = new_historic.to_json()
+        response = make_response(response_data)
+        response.status_code = 201
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+    
     return response
