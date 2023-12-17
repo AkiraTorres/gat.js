@@ -9,6 +9,7 @@ class Disciplina(db.Model):
     carga_horaria = db.Column(db.Integer)
     credito = db.Column(db.Integer)
     tipo = db.Column(db.Integer, nullable=False)
+    matricula_professor = db.Column(db.Integer, db.ForeignKey('professor.matricula'), nullable=True)
 
     def __init__(self, dados):
         self.carga_horaria = dados.get("carga_horaria")
@@ -16,6 +17,7 @@ class Disciplina(db.Model):
         self.credito = dados.get("credito")
         self.nome = dados.get("nome")
         self.tipo = dados.get("tipo")
+        self.matricula_professor = dados.get("matricula_professor")
 
 
     def to_json(self) -> dict:
@@ -25,5 +27,6 @@ class Disciplina(db.Model):
             "nome": self.nome,
             "carga_horaria": self.carga_horaria,
             "credito": self.credito,
-            "tipo": self.tipo
+            "tipo": self.tipo,
+            "matricula_professor": self.matricula_professor
         }

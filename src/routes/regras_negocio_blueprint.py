@@ -1,6 +1,9 @@
 from flask import Blueprint, request, make_response
 from models.Historico import Historico
 
+from models.Disciplina import Disciplina
+from models.Professor import Professor
+from models.db import db
 
 regras_negocio_blueprint = Blueprint('regrasNegocio', __name__)
 
@@ -128,6 +131,31 @@ def get_taxa_retencao(ano):
             "total_alunos": query_total_alunos,
             "retidos": query_retidos,
             "taxa_retencao": taxa_retencao
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+@regras_negocio_blueprint.route("/carga_horaria_total/<int:matricula>", methods=["GET"])
+def carga_horaria_total(matricula):
+    try:
+
+
+
+        carga_horaria_total = db.session.query(db.func.sum(Disciplina.carga_horaria)).filter(Disciplina.carga_horaria == matricula).scalar()
+
+        # carga_horaria_total = carga_horaria_total or 0
+
+        response_data = {
+            "matricula_professor": matricula,
+            "carga_horaria_total": carga_horaria_total
         }
 
         response = make_response(response_data)

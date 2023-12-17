@@ -14,6 +14,7 @@ from routes.student_blueprint import student_blueprint
 from routes.historic_blueprint import historic_blueprint
 from routes.subject_blueprint import subject_blueprint
 from routes.professor_blueprint import professor_blueprint
+from routes.regras_negocio_blueprint import regras_negocio_blueprint
 
 app = Flask(__name__)
 env_config = os.getenv("APP_SETTINGS", "configs.config.DevelopmentConfig")
@@ -30,6 +31,7 @@ app.register_blueprint(student_blueprint)
 app.register_blueprint(historic_blueprint)
 app.register_blueprint(subject_blueprint)
 app.register_blueprint(professor_blueprint)
+app.register_blueprint(regras_negocio_blueprint)
 
 if __name__ == "__main__":
     app.run()
