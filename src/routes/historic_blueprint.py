@@ -3,6 +3,7 @@ from models.db import db
 from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Aluno import Aluno
+from exceptions.SubjectNotFoundException import SubjectNotFoundException
 
 historic_blueprint = Blueprint('historico', __name__)
 
@@ -192,4 +193,43 @@ def get_taxa_sucesso_ano(ano):
         response = make_response(response_data)
         response.status_code = 500  # Internal Server Error
 
+    return response
+
+
+@historic_blueprint.route("/taxa_desitencia/<int:subject_id>", methods=["GET"])
+def get_abandonment_by_subject(subject_id):
+    try:
+        subject = Disciplina.query.filter(Disciplina.id == subject_id)
+
+        if not subject:
+            raise SubjectNotFoundException(subject_id)
+        
+        abandoment_total = Historico.query.filter(
+            Historico.id_disciplina == subject_id,
+            Historico.status == 4
+        ).count()
+
+        total = Historico.query.filter(
+            Historico.id_disciplina == subject_id
+        ).count()
+
+        abandonment_rate = (abandoment_total / total) * 100
+
+        response_data = {
+            "abandoment": abandoment_total,
+            "total": total,
+            "abandonment_rate": float(f"{abandonment_rate:.2f}")
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+        return response
+
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+    
     return response
