@@ -143,21 +143,63 @@ def get_taxa_retencao(ano):
 
     return response
 
-@regras_negocio_blueprint.route("/carga_horaria_total/<int:matricula>", methods=["GET"])
-def carga_horaria_total(matricula):
+
+@regras_negocio_blueprint.route("/carga_horaria_total/<int:id_matricula>", methods=["GET"])
+def carga_horaria_total_professor(id_matricula):
     try:
+        carga_horaria_total = db.session.query(db.func.sum(Disciplina.carga_horaria)).\
+            join(Professor, Disciplina.matricula_professor == Professor.matricula).\
+            filter(Professor.matricula == id_matricula).scalar()
 
-
-
-        carga_horaria_total = db.session.query(db.func.sum(Disciplina.carga_horaria)).filter(Disciplina.carga_horaria == matricula).scalar()
-
-        # carga_horaria_total = carga_horaria_total or 0
+        carga_horaria_total = carga_horaria_total or 0  # Isso serve para evitar que o valor seja None
 
         response_data = {
-            "matricula_professor": matricula,
+            "id_matricula": id_matricula,
             "carga_horaria_total": carga_horaria_total
         }
 
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@regras_negocio_blueprint.route("/disciplinas_que_mais_reprovaram/<int:ano>/<int:semestre>", methods=["GET"])
+def disciplinas_que_mais_reprovaram(ano, semestre):
+    try:
+        # Consulta ao banco de dados usando SQLAlchemy
+        disciplinas_reprovadas = db.session.query(
+            Disciplina.id.label('id_disciplina'),
+            Disciplina.codigo.label('codigo_disciplina'),
+            Disciplina.nome.label('nome_disciplina'),
+            Disciplina.carga_horaria.label('carga_horaria_disciplina'),
+            db.func.count().label('total_reprovacoes')
+        ).join(
+            Historico, Disciplina.id == Historico.id_disciplina
+        ).filter(
+            (Historico.status == 3) | (Historico.status == 4),
+            Historico.ano == ano,
+            Historico.semestre == semestre
+        ).group_by(Disciplina.id).order_by(db.desc('total_reprovacoes')).limit(5).all()
+
+        # Formatar os resultados em um formato serializável
+        resultados = []
+        for disciplina in disciplinas_reprovadas:
+            resultado = {
+                "id_disciplina": disciplina.id_disciplina,
+                "codigo_disciplina": disciplina.codigo_disciplina,
+                "nome_disciplina": disciplina.nome_disciplina,
+                "carga_horaria_disciplina": disciplina.carga_horaria_disciplina,
+                "total_reprovacoes": disciplina.total_reprovacoes
+            }
+            resultados.append(resultado)
+
+        response_data = {"resultados": resultados}
         response = make_response(response_data)
         response.status_code = 200
 
