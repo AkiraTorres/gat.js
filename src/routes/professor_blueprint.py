@@ -1,8 +1,7 @@
 from flask import Blueprint, request, make_response
-
 from models.Professor import Professor
-
 from models.db import db
+from models.Disciplina import Disciplina
 
 professor_blueprint = Blueprint("professor", __name__)
 
@@ -162,3 +161,27 @@ def criar_professor() -> object:
 
     return response
 
+
+@professor_blueprint.route("/carga_horaria_total/<int:id_matricula>", methods=["GET"])
+def carga_horaria_total_professor(id_matricula):
+    try:
+        carga_horaria_total = db.session.query(db.func.sum(Disciplina.carga_horaria)).\
+            join(Professor, Disciplina.matricula_professor == Professor.matricula).\
+            filter(Professor.matricula == id_matricula).scalar()
+
+        carga_horaria_total = carga_horaria_total or 0  # Isso serve para evitar que o valor seja None
+
+        response_data = {
+            "id_matricula": id_matricula,
+            "carga_horaria_total": carga_horaria_total
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response

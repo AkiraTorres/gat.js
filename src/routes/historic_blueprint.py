@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response
 from models.db import db
 from models.Historico import Historico
 from models.Disciplina import Disciplina
+from models.Aluno import Aluno
 
 historic_blueprint = Blueprint('historico', __name__)
 
@@ -58,5 +59,137 @@ def get_historic_by_ids(id_aluno, id_disciplina):
     else:
         response = make_response([historico.to_json() for historico in historicos])
         response.status_code = 200
+
+    return response
+
+@historic_blueprint.route("/alunos_matriculados", methods=["GET"])
+def alunos_matriculados():
+    try:
+        alunos_matriculados = Aluno.query.join(
+            Historico, Aluno.cpf == Historico.cpf_aluno
+        ).filter(
+            Historico.status == 1
+        ).all()
+
+        resultados = []
+        for aluno in alunos_matriculados:
+            resultado = {
+                "cpf": aluno.cpf,
+                "nome": aluno.nome,
+                "arg_class": aluno.arg_class,
+                "ano_entrada": aluno.ano_entrada,
+            }
+            resultados.append(resultado)
+
+        response_data = {"resultados": resultados}
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@historic_blueprint.route("/taxa_retencao/<int:ano>", methods=["GET"])
+def get_taxa_retencao(ano):
+    try:
+        # Contagem de alunos retidos
+        query_retidos = Historico.query.filter(
+            Historico.ano == ano,
+            (Historico.status == 3) | (Historico.status == 4)
+        ).count()
+
+        query_total_alunos = Historico.query.filter(
+            Historico.ano == ano
+        ).count()
+
+        if query_total_alunos > 0:
+            taxa_retencao = (query_retidos / query_total_alunos) * 100
+        else:
+            taxa_retencao = 0
+
+        response_data = {
+            "ano": ano,
+            "total_alunos": query_total_alunos,
+            "retidos": query_retidos,
+            "taxa_retencao": taxa_retencao
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@historic_blueprint.route("/taxa_aprovacao_global", methods=["GET"])
+def get_taxa_aprovacao_global():
+    try:
+        query_aprovados = Historico.query.filter(
+            (Historico.status == 1) | (Historico.status == 2)
+        ).count()
+
+        query_total_alunos = Historico.query.count()
+
+        if query_total_alunos > 0:
+            taxa_aprovacao_global = (query_aprovados / query_total_alunos) * 100
+        else:
+            taxa_aprovacao_global = 0
+
+        response_data = {
+            "total_alunos": query_total_alunos,
+            "aprovados": query_aprovados,
+            "taxa_aprovacao_global": taxa_aprovacao_global
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500
+
+    return response
+
+
+@historic_blueprint.route("/taxa_sucesso/<int:ano>", methods=["GET"])
+def get_taxa_sucesso_ano(ano):
+    try:
+        query_aprovados = Historico.query.filter(
+            Historico.ano == ano,
+            (Historico.status == 1) | (Historico.status == 2)
+        ).count()
+
+        query_total_alunos = Historico.query.filter(
+            Historico.ano == ano
+        ).count()
+
+        if query_total_alunos > 0:
+            taxa_sucesso = (query_aprovados / query_total_alunos) * 100
+        else:
+            taxa_sucesso = 0
+
+        response_data = {
+            "ano": ano,
+            "total_alunos": query_total_alunos,
+            "aprovados": query_aprovados,
+            "taxa_sucesso": taxa_sucesso
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
 
     return response
