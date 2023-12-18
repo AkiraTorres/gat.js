@@ -225,6 +225,11 @@ def get_abandonment_by_subject(subject_id):
         response = make_response(response_data)
         response.status_code = 200
 
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
         return response
 
       
