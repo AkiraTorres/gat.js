@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response
 from models.Professor import Professor
 from models.db import db
 from models.Disciplina import Disciplina
+from models.Historico import Historico
 
 professor_blueprint = Blueprint("professor", __name__)
 
@@ -183,5 +184,119 @@ def carga_horaria_total_professor(id_matricula):
         response_data = {"error": str(e)}
         response = make_response(response_data)
         response.status_code = 500  # Internal Server Error
+
+    return response
+
+# Taxa de desempenho por professor
+@professor_blueprint.route("/taxa_professor/<string:cpf>", methods=["GET"])
+def taxa_professor(cpf):
+    try:
+        professor = Professor.query.filter(Professor.cpf == cpf).first()
+
+        if professor:
+            subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+
+            resultado = {
+                "matricula": professor.matricula,
+                "nome": professor.nome,
+                "cpf": professor.cpf,
+                "disciplinas": [],
+            }
+
+            for subject in subjects_by_professor:
+                count_total_approved = Historico.query.filter(
+                    (Historico.id_disciplina == subject.id) &
+                    ((Historico.status == 1) | (Historico.status == 2))
+                ).count()
+
+                count_total_reproved = Historico.query.filter(
+                    (Historico.id_disciplina == subject.id) &
+                    ((Historico.status == 3) | (Historico.status == 4))
+                ).count()
+
+                total_students = count_total_approved + count_total_reproved
+
+                performance_rate = count_total_approved / total_students if total_students > 0 else 0
+
+                subject_info = {
+                    "id_disciplina": subject.id,
+                    "nome_disciplina": subject.nome,
+                    "Total de estudantes aprovados": count_total_approved,
+                    "Total de estudantes reprovados": count_total_reproved,
+                    "Taxa de desempenho": performance_rate,
+                }
+
+                resultado["disciplinas"].append(subject_info)
+
+            response_data = {"professor": resultado}
+            response_status = 200
+        else:
+            response_data = {"message": "Professor não encontrado"}
+            response_status = 404
+
+        response = make_response(response_data)
+        response.status_code = response_status
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500
+
+    return response
+
+# Avaliação média do professor
+@professor_blueprint.route("/avaliacao_professor/<string:cpf>", methods=["GET"])
+def avaliacao_professor(cpf):
+    try:
+        professor = Professor.query.filter(Professor.cpf == cpf).first()
+
+        if professor:
+            subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+
+
+            total_rate = 0
+            total_discipline = 0
+            for subject in subjects_by_professor:
+                count_total_approved = Historico.query.filter(
+                    (Historico.id_disciplina == subject.id) &
+                    ((Historico.status == 1) | (Historico.status == 2))
+                ).count()
+
+                count_total_reproved = Historico.query.filter(
+                    (Historico.id_disciplina == subject.id) &
+                    ((Historico.status == 3) | (Historico.status == 4))
+                ).count()
+
+                total_students = count_total_approved + count_total_reproved
+
+                performance_rate = count_total_approved / total_students if total_students > 0 else 0
+
+                total_rate += performance_rate
+                total_discipline += 1
+
+
+            avaliation_rate = total_rate/total_discipline
+            avaliation = round(avaliation_rate * 10)
+            resultado = {
+                "matricula": professor.matricula,
+                "nome": professor.nome,
+                "cpf": professor.cpf,
+                "avaliação": avaliation
+            }
+
+
+            response_data = {"professor": resultado}
+            response_status = 200
+        else:
+            response_data = {"message": "Professor não encontrado"}
+            response_status = 404
+
+        response = make_response(response_data)
+        response.status_code = response_status
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500
 
     return response

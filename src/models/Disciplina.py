@@ -30,3 +30,4 @@ class Disciplina(db.Model):
             "tipo": self.tipo,
             "matricula_professor": self.matricula_professor
         }
+

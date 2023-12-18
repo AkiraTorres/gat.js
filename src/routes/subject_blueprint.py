@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response
 from models.db import db
 from models.Disciplina import Disciplina
 from models.Historico import Historico
+from sqlalchemy import func
 
 subject_blueprint = Blueprint('disciplinas', __name__)
 
@@ -144,3 +145,104 @@ def get_taxa_reprovacao_disciplina(id_disciplina):
 
     return response
 
+#Média de Notas por Disciplina
+@subject_blueprint.route("/media_disciplina/<int:id_disciplina>", methods=["GET"])
+def get_media_disciplina(id_disciplina):
+    try:
+        sum_of_grade = Historico.query.with_entities(func.sum(Historico.nota)).filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4)
+        ).scalar()
+
+        count_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4)
+        ).count()
+
+        if count_students > 0:
+            average_grade = sum_of_grade / count_students
+        else:
+            average_grade = 0  # Handle the case where there are no students for that discipline
+
+        response_data = {
+            "id_disciplina": id_disciplina,
+            "média": average_grade, # It's returning bad values (BD inserts erro)
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+# Taxa de retenção de alunos por disciplina
+@subject_blueprint.route("/retencao_disciplina/<int:id_disciplina>", methods=["GET"])
+def get_retention_rate_disciplina(id_disciplina):
+    try:
+        count_aproved_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 1) | (Historico.status == 2)
+        ).count()
+
+        count_reproved_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 3) | (Historico.status == 4)
+        ).count()
+
+        total_students = count_aproved_students + count_reproved_students
+
+        retention_rate = count_reproved_students/total_students
+
+        response_data = {
+            "id_disciplina": id_disciplina,
+            "numero_de_aprovados" : count_aproved_students,
+            "numero_de_reprovados" : count_reproved_students,
+            "taxa de retenção": retention_rate
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+@subject_blueprint.route("/alunos_retidos_por_disciplina_por_vezes/<int:id_disciplina>/<int:times>", methods=["GET"])
+def get_students_failed_more_than_times(id_disciplina, times):
+    try:
+        reprovados = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 3) | (Historico.status == 4)
+        ).all()
+
+        alunos_reprovados = {}
+
+        for registro in reprovados:
+            aluno = registro.cpf_aluno
+            if aluno not in alunos_reprovados:
+                alunos_reprovados[aluno] = 0
+            alunos_reprovados[aluno] += 1
+
+        alunos_reprovados_mais_de_vezes = [aluno for aluno, count in alunos_reprovados.items() if count > times]
+
+        response_data = {
+            "id_disciplina": id_disciplina,
+            "alunos_reprovados_mais_de_vezes": alunos_reprovados_mais_de_vezes
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
