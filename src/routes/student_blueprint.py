@@ -18,7 +18,7 @@ def create_aluno():
     db.session.add(novo_aluno)
     db.session.commit()
 
-    response = make_response({'message': 'Aluno criado com sucesso', 'id': novo_aluno.id})
+    response = make_response({'message': 'Aluno criado com sucesso', 'cpf': novo_aluno.cpf})
     response.status_code = 201
 
     return response
