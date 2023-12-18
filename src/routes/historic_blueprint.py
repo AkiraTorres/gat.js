@@ -197,7 +197,7 @@ def get_taxa_sucesso_ano(ano):
     return response
 
 
-@historic_blueprint.route("/taxa_desitencia/<int:subject_id>", methods=["GET"])
+@historic_blueprint.route("/taxa_desistencia/<int:subject_id>", methods=["GET"])
 def get_abandonment_by_subject(subject_id):
     try:
         subject = Disciplina.query.filter(Disciplina.id == subject_id)
