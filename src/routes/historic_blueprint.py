@@ -254,7 +254,7 @@ def subjects_by_student():
         result = (result / len(students))
         response = make_response({
             "average": eval(f"{result:.2f}"),
-            "average_porcent": f"{result/total_subjects*100:.2f}%"
+            "average_percentage": f"{result/total_subjects*100:.2f}%"
         })
 
     except Exception as e:

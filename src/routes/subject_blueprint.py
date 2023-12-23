@@ -2,7 +2,7 @@ from flask import Blueprint, request, make_response
 from models.db import db
 from models.Disciplina import Disciplina
 from models.Historico import Historico
-from sqlalchemy import func, select
+from sqlalchemy import func
 
 subject_blueprint = Blueprint('disciplinas', __name__)
 

@@ -300,3 +300,31 @@ def avaliacao_professor(cpf):
         response.status_code = 500
 
     return response
+
+
+@professor_blueprint.route("/professor/media/disciplinas", methods=["GET"])
+def get_average_subjects_by_professor():
+    try:
+        result = 0
+        professors = db.session.query(
+            Professor.matricula,
+            Professor.cpf,
+            Professor.nome,
+            db.func.count().label('total_disciplinas')
+        ).join(
+            Disciplina, Professor.matricula == Disciplina.matricula_professor,
+        ).group_by(Professor.matricula).all()
+
+        for professor in professors:
+            result += professor.total_disciplinas
+
+        result = result / len(professors)
+
+        response_data = {"average_subjects_by_professor": eval(f"{result:.2f}")}
+        response = make_response(response_data)
+
+    except Exception as e:
+        response = make_response({"error": e})
+        response.status_code = 500
+
+    return response
