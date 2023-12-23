@@ -230,7 +230,7 @@ def get_abandonment_by_subject(subject_id):
         response = make_response(response_data)
         response.status_code = 500  # Internal Server Error
 
-        return response
+    return response
 
       
 @historic_blueprint.route('/historico', methods=['POST'])
