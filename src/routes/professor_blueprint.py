@@ -1,4 +1,5 @@
 from flask import Blueprint, request, make_response
+from exceptions.Professor.ProfessorNotFoundException import ProfessorNotFoundException
 from models.Professor import Professor
 from models.db import db
 from models.Disciplina import Disciplina
@@ -322,6 +323,38 @@ def get_average_subjects_by_professor():
 
         response_data = {"average_subjects_by_professor": eval(f"{result:.2f}")}
         response = make_response(response_data)
+
+    except Exception as e:
+        response = make_response({"error": e})
+        response.status_code = 500
+
+    return response
+
+@professor_blueprint.route("/professor/disciplinas/<identifier>", methods=["GET"])
+def get_professor_subjects(identifier):
+    try:
+        professor = Professor.query.filter(
+            (Professor.matricula == identifier) |
+            (Professor.cpf == identifier)
+        )
+
+        if professor.count() < 1:
+            raise ProfessorNotFoundException(identifier)
+        
+        professor = professor[0]
+        professor_subjects = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+        professor_subjects = [subject.to_json() for subject in professor_subjects]
+
+        response_data = {
+            "professor_registration": professor.matricula,
+            "professor_name": professor.nome,
+            "subjects": professor_subjects
+        }
+        response = make_response(response_data)
+
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)}) 
+        response.status_code = 404
 
     except Exception as e:
         response = make_response({"error": e})
