@@ -88,8 +88,7 @@ def alunos_matriculados():
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -124,8 +123,7 @@ def get_taxa_retencao(ano):
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -155,8 +153,7 @@ def get_taxa_aprovacao_global():
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
@@ -190,8 +187,7 @@ def get_taxa_sucesso_ano(ano):
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -226,13 +222,47 @@ def get_abandonment_by_subject(subject_id):
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
 
-      
+
+@historic_blueprint.route('/historico/subjects_by_student', methods=["GET"])
+def subjects_by_student():
+    try:
+        result = 0
+
+        total_subjects = Disciplina.query.count()
+
+        students = db.session.query(
+            Aluno.cpf,
+            Aluno.nome,
+            Aluno.ano_entrada,
+            db.func.count().label('total_cursadas')
+        ).join(
+            Historico, Aluno.cpf == Historico.cpf_aluno
+        ).filter(
+            (Historico.status == 1) |
+            (Historico.status == 2) | 
+            (Historico.status == 7)
+        ).group_by(Aluno.cpf).all()
+
+        for student in students:
+            result += student.total_cursadas
+
+        result = (result / len(students))
+        response = make_response({
+            "average": eval(f"{result:.2f}"),
+            "average_percentage": f"{result/total_subjects*100:.2f}%"
+        })
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
 @historic_blueprint.route('/historico', methods=['POST'])
 def create_historic():
     try:
@@ -246,8 +276,7 @@ def create_historic():
         response.status_code = 201
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
     
     return response

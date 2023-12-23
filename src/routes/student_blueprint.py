@@ -223,6 +223,94 @@ def performance():
 
     return response
 
+  
+@student_blueprint.route("/alunos/disciplinas/eletivas/<string:cpf>", methods=["GET"])
+def get_how_many_electives(cpf: int):
+    try:
+        student = Aluno.query.get(cpf)
+        if not student:
+            raise StudentNotFoundException(cpf)
+        
+        subjects = db.session.query(
+            Disciplina
+        ).join(
+            Historico, Disciplina.id == Historico.id_disciplina
+        ).filter(
+            Disciplina.tipo == 2,
+            Historico.cpf_aluno == cpf,
+            (Historico.status == 1) |
+            (Historico.status == 2) |
+            (Historico.status == 7)
+        ).all()
+
+        subjects = [subject.to_json() for subject in subjects]
+
+        response_data = student.to_json()
+        response_data["subjects"] = subjects
+
+        response = make_response(response_data)
+    
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)}) 
+        response.status_code = 404
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+@student_blueprint.route("/alunos/disciplinas/obrigatorias/<string:cpf>", methods=["GET"])
+def get_how_many_mandatory(cpf: int):
+    try:
+        student = Aluno.query.get(cpf)
+        if not student:
+            raise StudentNotFoundException(cpf)
+        
+        subjects = db.session.query(
+            Disciplina
+        ).join(
+            Historico, Disciplina.id == Historico.id_disciplina
+        ).filter(
+            Disciplina.tipo == 1,
+            Historico.cpf_aluno == cpf,
+            (Historico.status == 1) |
+            (Historico.status == 2) |
+            (Historico.status == 7)
+        ).all()
+
+        subjects = [subject.to_json() for subject in subjects]
+
+        response_data = student.to_json()
+        response_data["subjects"] = subjects
+
+        response = make_response(response_data)
+    
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)}) 
+        response.status_code = 404
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@student_blueprint.route("/alunos/desempenho/geral", methods=["GET"])
+def get_overall_academic_performance():
+    try:
+        data = db.session.query(func.avg(Historico.nota).label('avg')).filter(Historico.nota != -999).all()
+        total_subjects = Disciplina.query.count()
+
+        response_data = data[0].avg / total_subjects * 100
+        response = make_response({"overall_academic_performance": f"{response_data:.2f}%"})
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+        
 @student_blueprint.route("/taxa_conclusao/<cpf>", methods=["GET"])
 def taxa_conclusao(cpf):
     try:
@@ -314,3 +402,4 @@ def distribuicao_aluno(cpf):
         response.status_code = 500
 
     return response
+  

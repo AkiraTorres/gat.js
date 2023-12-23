@@ -241,12 +241,46 @@ def get_students_failed_more_than_times(id_disciplina, times):
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
 
+
+@subject_blueprint.route("/disciplina/media/creditos", methods=["GET"])
+def get_average_credits_by_subject():
+    try:
+        data = db.session.query(func.avg(Disciplina.credito).label('avg')).filter(Disciplina.credito != -999)
+
+        average = data[0].avg
+
+        response_data = {"average_credits": eval(f"{average:.2f}")}
+        response = make_response(response_data)
+    
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@subject_blueprint.route("/disciplina/media/carga_horaria", methods=["GET"])
+def get_average_workload_by_subject():
+    try:
+        data = db.session.query(func.avg(Disciplina.carga_horaria).label('avg'))
+
+        average = data[0].avg
+
+        response_data = {"average_workload": eval(f"{average:.2f}")}
+        response = make_response(response_data)
+    
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+  
 # Taxa de aprovacao por disciplina
 @subject_blueprint.route("/aprovacao_disciplina/<int:id_disciplina>", methods=["GET"])
 def get_approval_rate_disciplina(id_disciplina):

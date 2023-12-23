@@ -1,4 +1,5 @@
 from flask import Blueprint, request, make_response
+from exceptions.Professor.ProfessorNotFoundException import ProfessorNotFoundException
 from models.Professor import Professor
 from models.db import db
 from models.Disciplina import Disciplina
@@ -187,6 +188,7 @@ def carga_horaria_total_professor(id_matricula):
 
     return response
 
+
 # Taxa de desempenho por professor
 @professor_blueprint.route("/taxa_professor/<string:cpf>", methods=["GET"])
 def taxa_professor(cpf):
@@ -244,6 +246,7 @@ def taxa_professor(cpf):
 
     return response
 
+
 # Avaliação média do professor
 @professor_blueprint.route("/avaliacao_professor/<string:cpf>", methods=["GET"])
 def avaliacao_professor(cpf):
@@ -297,6 +300,67 @@ def avaliacao_professor(cpf):
     except Exception as e:
         response_data = {"error": str(e)}
         response = make_response(response_data)
+        response.status_code = 500
+
+    return response
+
+
+@professor_blueprint.route("/professor/media/disciplinas", methods=["GET"])
+def get_average_subjects_by_professor():
+    try:
+        result = 0
+        professors = db.session.query(
+            Professor.matricula,
+            Professor.cpf,
+            Professor.nome,
+            db.func.count().label('total_disciplinas')
+        ).join(
+            Disciplina, Professor.matricula == Disciplina.matricula_professor,
+        ).group_by(Professor.matricula).all()
+
+        for professor in professors:
+            result += professor.total_disciplinas
+
+        result = result / len(professors)
+
+        response_data = {"average_subjects_by_professor": eval(f"{result:.2f}")}
+        response = make_response(response_data)
+
+    except Exception as e:
+        response = make_response({"error": e})
+        response.status_code = 500
+
+    return response
+
+
+@professor_blueprint.route("/professor/disciplinas/<identifier>", methods=["GET"])
+def get_professor_subjects(identifier):
+    try:
+        professor = Professor.query.filter(
+            (Professor.matricula == identifier) |
+            (Professor.cpf == identifier)
+        )
+
+        if professor.count() < 1:
+            raise ProfessorNotFoundException(identifier)
+        
+        professor = professor[0]
+        professor_subjects = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+        professor_subjects = [subject.to_json() for subject in professor_subjects]
+
+        response_data = {
+            "professor_registration": professor.matricula,
+            "professor_name": professor.nome,
+            "subjects": professor_subjects
+        }
+        response = make_response(response_data)
+
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)}) 
+        response.status_code = 404
+
+    except Exception as e:
+        response = make_response({"error": e})
         response.status_code = 500
 
     return response
