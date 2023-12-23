@@ -225,7 +225,7 @@ def get_students_failed_more_than_times(id_disciplina, times):
         alunos_reprovados = {}
 
         for registro in reprovados:
-            aluno = registro.id_aluno
+            aluno = registro.cpf_aluno
             if aluno not in alunos_reprovados:
                 alunos_reprovados[aluno] = 0
             alunos_reprovados[aluno] += 1
