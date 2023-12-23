@@ -188,6 +188,7 @@ def carga_horaria_total_professor(id_matricula):
 
     return response
 
+
 # Taxa de desempenho por professor
 @professor_blueprint.route("/taxa_professor/<string:cpf>", methods=["GET"])
 def taxa_professor(cpf):
@@ -244,6 +245,7 @@ def taxa_professor(cpf):
         response.status_code = 500
 
     return response
+
 
 # Avaliação média do professor
 @professor_blueprint.route("/avaliacao_professor/<string:cpf>", methods=["GET"])
@@ -329,6 +331,7 @@ def get_average_subjects_by_professor():
         response.status_code = 500
 
     return response
+
 
 @professor_blueprint.route("/professor/disciplinas/<identifier>", methods=["GET"])
 def get_professor_subjects(identifier):

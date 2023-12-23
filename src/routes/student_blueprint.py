@@ -294,3 +294,19 @@ def get_how_many_mandatory(cpf: int):
         response.status_code = 500  # Internal Server Error
 
     return response
+
+
+@student_blueprint.route("/alunos/desempenho/geral", methods=["GET"])
+def get_overall_academic_performance():
+    try:
+        data = db.session.query(func.avg(Historico.nota).label('avg')).filter(Historico.nota != -999).all()
+        total_subjects = Disciplina.query.count()
+
+        response_data = data[0].avg / total_subjects * 100
+        response = make_response({"overall_academic_performance": f"{response_data:.2f}%"})
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
