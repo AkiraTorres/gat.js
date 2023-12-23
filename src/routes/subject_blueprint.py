@@ -225,7 +225,7 @@ def get_students_failed_more_than_times(id_disciplina, times):
         alunos_reprovados = {}
 
         for registro in reprovados:
-            aluno = registro.cpf_aluno
+            aluno = registro.id_aluno
             if aluno not in alunos_reprovados:
                 alunos_reprovados[aluno] = 0
             alunos_reprovados[aluno] += 1
@@ -244,5 +244,89 @@ def get_students_failed_more_than_times(id_disciplina, times):
         response_data = {"error": str(e)}
         response = make_response(response_data)
         response.status_code = 500  # Internal Server Error
+
+    return response
+
+# Taxa de aprovacao por disciplina
+@subject_blueprint.route("/aprovacao_disciplina/<int:id_disciplina>", methods=["GET"])
+def get_approval_rate_disciplina(id_disciplina):
+    try:
+        count_aproved_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 1) | (Historico.status == 2)
+        ).count()
+
+        count_reproved_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 3) | (Historico.status == 4)
+        ).count()
+
+        total_students = count_aproved_students + count_reproved_students
+
+        approval_rate = count_aproved_students/total_students
+
+        response_data = {
+            "id_disciplina": id_disciplina,
+            "numero_de_aprovados" : count_aproved_students,
+            "numero_de_reprovados" : count_reproved_students,
+            "taxa de aprovacao": approval_rate
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response_data = {"error": str(e)}
+        response = make_response(response_data)
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+@subject_blueprint.route("/reprovacoes_disciplina/<id>", methods=["GET"])
+def reprovacoes_disciplina(id):
+    try:
+
+        fails = Historico.query.filter(Historico.id_disciplina == id, (Historico.status == 3) | (Historico.status == 4)).count()
+        
+        response_data = {
+            "Reprovações" : fails
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
+
+@subject_blueprint.route("/distribuicao_disciplina/<id>", methods=["GET"])
+def distribuicao_disciplina(id):
+    try:
+        
+        subjects_count = Historico.query.filter(Historico.id_disciplina == id).count()
+
+        subject_studied = Historico.query.filter(Historico.id_disciplina == id).all()
+        
+        grades_sum = 0
+
+        for subject in subject_studied:
+            historico = Historico.query.filter(Historico.id == subject.id).first()
+            if historico:
+                grades_sum += historico.nota
+
+        grade_distribution = grades_sum/subjects_count
+
+        response_data = {
+            "Distribuição de nota": grade_distribution
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
 
     return response

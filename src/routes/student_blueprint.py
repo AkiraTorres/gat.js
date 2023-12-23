@@ -222,3 +222,95 @@ def performance():
         response.status_code = 500
 
     return response
+
+@student_blueprint.route("/taxa_conclusao/<cpf>", methods=["GET"])
+def taxa_conclusao(cpf):
+    try:
+        student = Aluno.query.filter(Aluno.cpf == cpf).first()
+
+        if not student:
+            raise StudentNotFoundException(cpf)
+
+        approved = 0
+        approval_rate = 0
+
+        approved = Historico.query.filter(Historico.cpf_aluno == cpf, (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 7)).count()
+        
+        approval_rate = approved/50
+
+        response_data = {
+            "Matérias aprovadas": approved,
+            "Taxa de conclusão": approval_rate
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
+
+@student_blueprint.route("/reprovacoes_aluno/<cpf>", methods=["GET"])
+def reprovacoes_aluno(cpf):
+    try:
+        student = Aluno.query.filter(Aluno.cpf == cpf).first()
+
+        if not student:
+            raise StudentNotFoundException(cpf)
+
+        fails = Historico.query.filter(Historico.cpf_aluno == cpf, (Historico.status == 3) | (Historico.status == 4)).count()
+        
+        if(fails >= 10):
+            response_data = {
+                "Reprovações" : fails,
+                "Alerta" : "Você está com muitas reprovações, entre em contato com a escolaridade"
+            }
+        else:
+            response_data = {
+                "Reprovações" : fails
+            }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
+
+@student_blueprint.route("/distribuicao_aluno/<cpf>", methods=["GET"])
+def distribuicao_aluno(cpf):
+    try:
+        student = Aluno.query.filter(Aluno.cpf == cpf).first()
+
+        if not student:
+            raise StudentNotFoundException(cpf)
+        
+        subjects_count = Historico.query.filter(Historico.cpf_aluno == cpf).count()
+
+        subject_studied = Historico.query.filter(Historico.cpf_aluno == student.cpf).all()
+        
+        grades_sum = 0
+
+        for subject in subject_studied:
+            historico = Historico.query.filter(Historico.id == subject.id).first()
+            if historico:
+                grades_sum += historico.nota
+
+        grade_distribution = grades_sum/subjects_count
+
+        response_data = {
+            "Distribuição de nota": grade_distribution
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response

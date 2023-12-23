@@ -251,3 +251,4 @@ def create_historic():
         response.status_code = 500  # Internal Server Error
     
     return response
+
