@@ -235,7 +235,7 @@ def subjects_by_student():
 
         total_subjects = Disciplina.query.count()
 
-        alunos = db.session.query(
+        students = db.session.query(
             Aluno.cpf,
             Aluno.nome,
             Aluno.ano_entrada,
@@ -248,14 +248,14 @@ def subjects_by_student():
             (Historico.status == 7)
         ).group_by(Aluno.cpf).all()
 
-        for aluno in alunos:
-            result += aluno.total_cursadas
+        for student in students:
+            result += student.total_cursadas
 
-        result = (result / len(alunos))
+        result = (result / len(students))
         response = make_response({
             "average": eval(f"{result:.2f}"),
             "average_porcent": f"{result/total_subjects*100:.2f}%"
-            })
+        })
 
     except Exception as e:
         response = make_response({"error": str(e)})
