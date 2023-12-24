@@ -3,7 +3,7 @@ from models.db import db
 from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Aluno import Aluno
-from exceptions.SubjectNotFoundException import SubjectNotFoundException
+from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 
 historic_blueprint = Blueprint('historico', __name__)
 
