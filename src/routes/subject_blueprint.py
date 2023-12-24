@@ -67,8 +67,24 @@ def find_subject_by_id(id_disciplina):
         response.status_code = 404
         return response
     
-    # se existe: mostar a disciplina 
-    return  make_response(disciplina.to_json())
+
+@subject_blueprint.route("/disciplinas/<int:subject_id>", methods=["DELETE"])
+def delete_by_id(subject_id):
+    try:
+        subject = find_subject_by_id(subject_id)
+        if not subject:
+            raise SubjectNotFoundException(subject_id)
+        
+        db.session.delete(subject)
+        db.session.commit()
+
+        response = make_response({'message': f'Subject with id {subject_id} deleted successfully'})
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": e})
+        response.status_code = 404
+
+    return response
 
 
 @subject_blueprint.route("/disciplinas_que_mais_reprovaram/<int:ano>/<int:semestre>", methods=["GET"])
