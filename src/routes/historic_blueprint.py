@@ -298,10 +298,30 @@ def update_historic(id):
 
         db.session.commit()
 
-        response = make_response({"message": "Historic with id {id} updated successfully"})
+        response = make_response({"message": f"Historic with id {id} updated successfully"})
 
     except Exception as e:
         response = make_response({"error": str(e)})
         response.status_code = 500
+
+    return response
+
+
+@historic_blueprint.route('/historico/<int:id>', methods=["DELETE"])
+def delete_historic(id):
+    try:
+        historic = Historico.query.get(id)
+
+        if not historic:
+            pass
+
+        db.session.delete(historic)
+        db.session.commit()
+
+        response = make_response({"message": f"Historic with {id} deleted successfully"})
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
 
     return response
