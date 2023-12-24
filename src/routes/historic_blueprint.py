@@ -306,3 +306,57 @@ def create_historic():
         response.status_code = 500  # Internal Server Error
     
     return response
+
+
+@historic_blueprint.route('/historico/<int:id>', methods=['PUT'])
+def update_historic(id):
+    try:
+        historic = Historico.query.get(id)
+        if not historic:
+            raise HistoricNotFoundException(id)
+
+        historic.cpf_aluno = request.json.get("cpf_aluno")
+        historic.id_disciplina = request.json.get("id_disciplina")
+        historic.status = request.json.get("status")
+        historic.ano = request.json.get("ano")
+        historic.semestre = request.json.get("semestre")
+        historic.nota = request.json.get("nota")
+
+        db.session.commit()
+
+        response = make_response({"message": f"Historic with id {id} updated successfully"})
+        
+    except HistoricNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404  # Not Found
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
+
+
+@historic_blueprint.route('/historico/<int:id>', methods=["DELETE"])
+def delete_historic(id):
+    try:
+        historic = Historico.query.get(id)
+
+        if not historic:
+            raise HistoricNotFoundException(id)
+
+        db.session.delete(historic)
+        db.session.commit()
+
+        response = make_response({"message": f"Historic with {id} deleted successfully"})
+        
+    except HistoricNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404  # Not Found
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+  

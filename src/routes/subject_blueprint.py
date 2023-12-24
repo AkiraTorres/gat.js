@@ -102,14 +102,13 @@ def find_subject_by_id(id_disciplina):
         response = make_response({"error": str(e)})
         response.status_code = 404
         return response
-
+      
     except Exception as e:
         response = make_response({"error": str(e)})
         response.status_code = 500
         
-    # se existe: mostar a disciplina 
     return response
-
+  
 
 @subject_blueprint.route("/disciplinas/<int:subject_id>", methods=["DELETE"])
 def delete_by_id(subject_id):
