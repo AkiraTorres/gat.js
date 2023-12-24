@@ -1,4 +1,6 @@
 from flask import Blueprint, request, make_response
+from exceptions.Historic.HistoricNotFoundException import HistoricNotFoundException
+from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from models.db import db
 from models.Historico import Historico
 from models.Disciplina import Disciplina
@@ -11,8 +13,14 @@ historic_blueprint = Blueprint('historico', __name__)
 # listar historico escolar 
 @historic_blueprint.route('/historico', methods=['GET'])
 def list_all_historic():
-    historicos = Historico.query.all()
-    response = make_response([historico.to_json() for historico in historicos])
+    try:
+        historicos = Historico.query.all()
+        response = make_response([historico.to_json() for historico in historicos])
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
     return response
 
 
@@ -38,13 +46,10 @@ def get_historic_by_cpf(cpf_aluno):
 
             resultados.append(resultado)
 
-        response_data = {"historicos": resultados}
-        response = make_response(response_data)
-        response.status_code = 200
+        response = make_response({"historicos": resultados})
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -52,14 +57,34 @@ def get_historic_by_cpf(cpf_aluno):
 
 @historic_blueprint.route('/historico/<int:id_aluno>/<int:id_disciplina>', methods=['GET'])
 def get_historic_by_ids(id_aluno, id_disciplina):
-    historicos = Historico.query.filter_by(id_aluno=id_aluno, id_disciplina=id_disciplina).all()
+    try:
+        if not Aluno.query.get(id_aluno):
+            raise StudentNotFoundException(id_aluno)
+        if not Disciplina.query.get(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
 
-    if not historicos:
-        response = make_response({'message': 'Histórico não encontrado'})
-        response.status_code = 404
-    else:
+        historicos = Historico.query.filter_by(id_aluno=id_aluno, id_disciplina=id_disciplina).all()
+
+        if not historicos:
+            raise HistoricNotFoundException()
+
         response = make_response([historico.to_json() for historico in historicos])
-        response.status_code = 200
+
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except HistoricNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
 
     return response
 
@@ -263,6 +288,7 @@ def subjects_by_student():
 
     return response
 
+
 @historic_blueprint.route('/historico', methods=['POST'])
 def create_historic():
     try:
@@ -280,4 +306,3 @@ def create_historic():
         response.status_code = 500  # Internal Server Error
     
     return response
-
