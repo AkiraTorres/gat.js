@@ -281,3 +281,27 @@ def create_historic():
     
     return response
 
+
+@historic_blueprint.route('/historico/<int:id>', methods=['PUT'])
+def update_historic(id):
+    try:
+        historic = Historico.query.get(id)
+        if not historic:
+            raise Exception()
+
+        historic.cpf_aluno = request.json.get("cpf_aluno")
+        historic.id_disciplina = request.json.get("id_disciplina")
+        historic.status = request.json.get("status")
+        historic.ano = request.json.get("ano")
+        historic.semestre = request.json.get("semestre")
+        historic.nota = request.json.get("nota")
+
+        db.session.commit()
+
+        response = make_response({"message": "Historic with id {id} updated successfully"})
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
