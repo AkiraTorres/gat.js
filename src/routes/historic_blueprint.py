@@ -1,8 +1,11 @@
 from flask import Blueprint, request, make_response
+from exceptions.Historic.HistoricNotFoundException import HistoricNotFoundException
+from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from models.db import db
 from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Aluno import Aluno
+from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 
 historic_blueprint = Blueprint('historico', __name__)
 
@@ -10,8 +13,14 @@ historic_blueprint = Blueprint('historico', __name__)
 # listar historico escolar 
 @historic_blueprint.route('/historico', methods=['GET'])
 def list_all_historic():
-    historicos = Historico.query.all()
-    response = make_response([historico.to_json() for historico in historicos])
+    try:
+        historicos = Historico.query.all()
+        response = make_response([historico.to_json() for historico in historicos])
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
     return response
 
 
@@ -37,13 +46,10 @@ def get_historic_by_cpf(cpf_aluno):
 
             resultados.append(resultado)
 
-        response_data = {"historicos": resultados}
-        response = make_response(response_data)
-        response.status_code = 200
+        response = make_response({"historicos": resultados})
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -51,14 +57,34 @@ def get_historic_by_cpf(cpf_aluno):
 
 @historic_blueprint.route('/historico/<int:id_aluno>/<int:id_disciplina>', methods=['GET'])
 def get_historic_by_ids(id_aluno, id_disciplina):
-    historicos = Historico.query.filter_by(id_aluno=id_aluno, id_disciplina=id_disciplina).all()
+    try:
+        if not Aluno.query.get(id_aluno):
+            raise StudentNotFoundException(id_aluno)
+        if not Disciplina.query.get(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
 
-    if not historicos:
-        response = make_response({'message': 'Histórico não encontrado'})
-        response.status_code = 404
-    else:
+        historicos = Historico.query.filter_by(id_aluno=id_aluno, id_disciplina=id_disciplina).all()
+
+        if not historicos:
+            raise HistoricNotFoundException()
+
         response = make_response([historico.to_json() for historico in historicos])
-        response.status_code = 200
+
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except HistoricNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
 
     return response
 
@@ -87,8 +113,7 @@ def alunos_matriculados():
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -123,8 +148,7 @@ def get_taxa_retencao(ano):
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -154,8 +178,7 @@ def get_taxa_aprovacao_global():
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
@@ -189,8 +212,78 @@ def get_taxa_sucesso_ano(ano):
         response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@historic_blueprint.route("/taxa_desistencia/<int:subject_id>", methods=["GET"])
+def get_abandonment_by_subject(subject_id):
+    try:
+        subject = Disciplina.query.filter(Disciplina.id == subject_id)
+
+        if not subject:
+            raise SubjectNotFoundException(subject_id)
+        
+        abandoment_total = Historico.query.filter(
+            Historico.id_disciplina == subject_id,
+            Historico.status == 4
+        ).count()
+
+        total = Historico.query.filter(
+            Historico.id_disciplina == subject_id
+        ).count()
+
+        abandonment_rate = (abandoment_total / total) * 100
+
+        response_data = {
+            "abandoment": abandoment_total,
+            "total": total,
+            "abandonment_rate": float(f"{abandonment_rate:.2f}")
+        }
+
         response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@historic_blueprint.route('/historico/subjects_by_student', methods=["GET"])
+def subjects_by_student():
+    try:
+        result = 0
+
+        total_subjects = Disciplina.query.count()
+
+        students = db.session.query(
+            Aluno.cpf,
+            Aluno.nome,
+            Aluno.ano_entrada,
+            db.func.count().label('total_cursadas')
+        ).join(
+            Historico, Aluno.cpf == Historico.cpf_aluno
+        ).filter(
+            (Historico.status == 1) |
+            (Historico.status == 2) | 
+            (Historico.status == 7)
+        ).group_by(Aluno.cpf).all()
+
+        for student in students:
+            result += student.total_cursadas
+
+        result = (result / len(students))
+        response = make_response({
+            "average": eval(f"{result:.2f}"),
+            "average_percentage": f"{result/total_subjects*100:.2f}%"
+        })
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -209,8 +302,61 @@ def create_historic():
         response.status_code = 201
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
     
     return response
+
+
+@historic_blueprint.route('/historico/<int:id>', methods=['PUT'])
+def update_historic(id):
+    try:
+        historic = Historico.query.get(id)
+        if not historic:
+            raise HistoricNotFoundException(id)
+
+        historic.cpf_aluno = request.json.get("cpf_aluno")
+        historic.id_disciplina = request.json.get("id_disciplina")
+        historic.status = request.json.get("status")
+        historic.ano = request.json.get("ano")
+        historic.semestre = request.json.get("semestre")
+        historic.nota = request.json.get("nota")
+
+        db.session.commit()
+
+        response = make_response({"message": f"Historic with id {id} updated successfully"})
+        
+    except HistoricNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404  # Not Found
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
+
+
+@historic_blueprint.route('/historico/<int:id>', methods=["DELETE"])
+def delete_historic(id):
+    try:
+        historic = Historico.query.get(id)
+
+        if not historic:
+            raise HistoricNotFoundException(id)
+
+        db.session.delete(historic)
+        db.session.commit()
+
+        response = make_response({"message": f"Historic with {id} deleted successfully"})
+        
+    except HistoricNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404  # Not Found
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+  

@@ -1,4 +1,6 @@
 from flask import Blueprint, request, make_response
+from exceptions.Subject.SubjectAlreadyExistsException import SubjectAlreadyExistsException
+from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 from models.db import db
 from models.Disciplina import Disciplina
 from models.Historico import Historico
@@ -8,69 +10,125 @@ from sqlalchemy import func
 
 subject_blueprint = Blueprint('disciplinas', __name__)
 
+
 @subject_blueprint.route("/disciplinas", methods=["GET"])
 def list_disciplinas():
-    disciplinas_list = Disciplina.query.all()
-    return make_response([disc.to_json() for disc in disciplinas_list])
+    try:
+        disciplinas_list = Disciplina.query.all()
+        response = make_response([disc.to_json() for disc in disciplinas_list])
+    
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
 
 
 @subject_blueprint.route("/disciplinas/<int:id_disciplina>", methods=["PUT"])
 def update_disciplina(id_disciplina):
-    # retornar a disciplina do banco de dados 
-    disciplina = Disciplina.query.get(id_disciplina)
+    try:
+        # retornar a disciplina do banco de dados 
+        disciplina = Disciplina.query.get(id_disciplina)
 
-    if not disciplina:
-        response = make_response({'message': 'disciplina não encontrada'})
+        if not disciplina:
+            raise SubjectNotFoundException(id_disciplina)
+
+        # coletar as informações da requisição
+        dados_atualizados = request.json
+        disciplina.carga_horaria = dados_atualizados.get('carga_horaria', disciplina.carga_horaria)
+        disciplina.codigo = dados_atualizados.get('codigo', disciplina.codigo)
+        disciplina.credito = dados_atualizados.get('credito', disciplina.credito)
+        disciplina.nome = dados_atualizados.get('nome', disciplina.nome)
+        disciplina.tipo = dados_atualizados.get('tipo', disciplina.tipo)
+
+        # subir pro banco de dados 
+        db.session.commit()
+
+        response = make_response({'message': 'Disciplina atualizada com sucesso'})
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
         response.status_code = 404
-        return response
 
-    
-    # coletar as informações da requisição
-    dados_atualizados = request.json
-    disciplina.carga_horaria = dados_atualizados.get('carga_horaria', disciplina.carga_horaria)
-    disciplina.codigo = dados_atualizados.get('codigo', disciplina.codigo)
-    disciplina.credito = dados_atualizados.get('credito', disciplina.credito)
-    disciplina.nome = dados_atualizados.get('nome', disciplina.nome)
-    disciplina.tipo = dados_atualizados.get('tipo', disciplina.tipo)
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
 
-    # subir pro banco de dados 
-    db.session.commit()
-
-    return make_response({'message': 'Disciplina atualizada com sucesso'})
+    return response
 
 
 @subject_blueprint.route("/disciplinas", methods=["POST"])
 def create_subject():
-    # coletar os dados
-    dados_disciplina = request.json
+    try:
+        # coletar os dados
+        dados_disciplina = request.json
 
-    # criar um objeto disciplina
-    nova_disciplina = Disciplina(dados_disciplina)
+        # criar um objeto disciplina
+        nova_disciplina = Disciplina(dados_disciplina)
 
-    # adicionar no banco de dados 
-    db.session.add(nova_disciplina)
-    db.session.commit()
+        if find_subject_by_id(nova_disciplina.id):
+            raise SubjectAlreadyExistsException(nova_disciplina.id)
 
-    # retornar resposta 
+        # adicionar no banco de dados 
+        db.session.add(nova_disciplina)
+        db.session.commit()
 
-    response = make_response({'message': 'Disciplina criada com sucesso', 'id': nova_disciplina.id})
-    response.status_code = 201
+        # retornar resposta 
+        response = make_response({'message': 'Disciplina criada com sucesso', 'id': nova_disciplina.id})
+        response.status_code = 201
+
+    except SubjectAlreadyExistsException as e:
+        response = make_response({"error": str(e)})
+        response.status = 403
+    
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status = 500
+    
     return response
+
 
 @subject_blueprint.route("/disciplinas/<int:id_disciplina>", methods=["GET"])
 def find_subject_by_id(id_disciplina):
-    # procurar disciplina pelo no banco de dados 
-    disciplina = Disciplina.query.get(id_disciplina)
+    try:
+        # procurar disciplina pelo no banco de dados 
+        disciplina = Disciplina.query.get(id_disciplina)
 
-    # verificar se a disciplina existe 
+        # verificar se a disciplina existe 
+        if not disciplina:
+            raise SubjectNotFoundException(id_disciplina)
 
-    if not disciplina:
-        response = make_response({'message': 'disciplina não encontrada'})
+        response = make_response(disciplina.to_json())
+        
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
         response.status_code = 404
         return response
-    
-    # se existe: mostar a disciplina 
-    return  make_response(disciplina.to_json())
+      
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+        
+    return response
+  
+
+@subject_blueprint.route("/disciplinas/<int:subject_id>", methods=["DELETE"])
+def delete_by_id(subject_id):
+    try:
+        subject = find_subject_by_id(subject_id)
+        if not subject:
+            raise SubjectNotFoundException(subject_id)
+        
+        db.session.delete(subject)
+        db.session.commit()
+
+        response = make_response({'message': f'Subject with id {subject_id} deleted successfully'})
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": e})
+        response.status_code = 404
+
+    return response
 
 
 @subject_blueprint.route("/disciplinas_que_mais_reprovaram/<int:ano>/<int:semestre>", methods=["GET"])
@@ -103,11 +161,9 @@ def disciplinas_que_mais_reprovaram(ano, semestre):
 
         response_data = {"resultados": resultados}
         response = make_response(response_data)
-        response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
@@ -116,6 +172,9 @@ def disciplinas_que_mais_reprovaram(ano, semestre):
 @subject_blueprint.route("/taxa_reprovacao/<int:id_disciplina>", methods=["GET"])
 def get_taxa_reprovacao_disciplina(id_disciplina):
     try:
+        if not find_subject_by_id(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
+
         query_reprovados = Historico.query.filter(
             Historico.id_disciplina == id_disciplina,
             (Historico.status == 3) | (Historico.status == 4)
@@ -138,19 +197,25 @@ def get_taxa_reprovacao_disciplina(id_disciplina):
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
+
 
 #Média de Notas por Disciplina
 @subject_blueprint.route("/media_disciplina/<int:id_disciplina>", methods=["GET"])
 def get_media_disciplina(id_disciplina):
     try:
+        if not find_subject_by_id(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
+
         sum_of_grade = Historico.query.with_entities(func.sum(Historico.nota)).filter(
             Historico.id_disciplina == id_disciplina,
             (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4)
@@ -172,19 +237,25 @@ def get_media_disciplina(id_disciplina):
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
+
 
 # Taxa de retenção de alunos por disciplina
 @subject_blueprint.route("/retencao_disciplina/<int:id_disciplina>", methods=["GET"])
 def get_retention_rate_disciplina(id_disciplina):
     try:
+        if not find_subject_by_id(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
+
         count_aproved_students = Historico.query.filter(
             Historico.id_disciplina == id_disciplina,
             (Historico.status == 1) | (Historico.status == 2)
@@ -207,18 +278,24 @@ def get_retention_rate_disciplina(id_disciplina):
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
 
+
 @subject_blueprint.route("/alunos_retidos_por_disciplina_por_vezes/<int:id_disciplina>/<int:times>", methods=["GET"])
 def get_students_failed_more_than_times(id_disciplina, times):
     try:
+        if not find_subject_by_id(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
+
         reprovados = Historico.query.filter(
             Historico.id_disciplina == id_disciplina,
             (Historico.status == 3) | (Historico.status == 4)
@@ -240,11 +317,84 @@ def get_students_failed_more_than_times(id_disciplina, times):
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@subject_blueprint.route("/disciplina/media/creditos", methods=["GET"])
+def get_average_credits_by_subject():
+    try:
+        data = db.session.query(func.avg(Disciplina.credito).label('avg')).filter(Disciplina.credito != -999)
+
+        average = data[0].avg
+
+        response_data = {"average_credits": eval(f"{average:.2f}")}
         response = make_response(response_data)
+    
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+
+@subject_blueprint.route("/disciplina/media/carga_horaria", methods=["GET"])
+def get_average_workload_by_subject():
+    try:
+        data = db.session.query(func.avg(Disciplina.carga_horaria).label('avg'))
+
+        average = data[0].avg
+
+        response_data = {"average_workload": eval(f"{average:.2f}")}
+        response = make_response(response_data)
+    
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500  # Internal Server Error
+
+    return response
+
+  
+# Taxa de aprovacao por disciplina
+@subject_blueprint.route("/aprovacao_disciplina/<int:id_disciplina>", methods=["GET"])
+def get_approval_rate_disciplina(id_disciplina):
+    try:
+        if not find_subject_by_id(id_disciplina):
+            raise SubjectNotFoundException(id_disciplina)
+
+        count_aproved_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 1) | (Historico.status == 2)
+        ).count()
+
+        count_reproved_students = Historico.query.filter(
+            Historico.id_disciplina == id_disciplina,
+            (Historico.status == 3) | (Historico.status == 4)
+        ).count()
+
+        total_students = count_aproved_students + count_reproved_students
+
+        approval_rate = count_aproved_students/total_students
+
+        response_data = {
+            "id_disciplina": id_disciplina,
+            "numero_de_aprovados" : count_aproved_students,
+            "numero_de_reprovados" : count_reproved_students,
+            "taxa de aprovacao": approval_rate
+        }
+
+        response = make_response(response_data)
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -319,6 +469,29 @@ def taxa_aprovação_disciplina_professor():
         'Taxa de disistencia' : taxa_desistencia
     }
 
+    
+@subject_blueprint.route("/reprovacoes_disciplina/<int:id>", methods=["GET"])
+def reprovacoes_disciplina(id):
+    try:
+        if not find_subject_by_id(id):
+            raise SubjectNotFoundException(id)
+
+        fails = Historico.query.filter(Historico.id_disciplina == id, (Historico.status == 3) | (Historico.status == 4)).count()
+        
+        response_data = {
+            "Reprovações" : fails
+        }
+
+        response = make_response(response_data)
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
     return response
 
 
@@ -368,16 +541,37 @@ def taxa_aprovacao_por_professor():
 
     return resultado_por_professor
     
-
-
     
+@subject_blueprint.route("/distribuicao_disciplina/<int:id>", methods=["GET"])
+def distribuicao_disciplina(id):
+    try:
+        if not find_subject_by_id(id):
+            raise SubjectNotFoundException(id)
+        subjects_count = Historico.query.filter(Historico.id_disciplina == id).count()
 
+        subject_studied = Historico.query.filter(Historico.id_disciplina == id).all()
+        
+        grades_sum = 0
 
+        for subject in subject_studied:
+            historico = Historico.query.filter(Historico.id == subject.id).first()
+            if historico:
+                grades_sum += historico.nota
 
+        grade_distribution = grades_sum/subjects_count
 
+        response_data = {
+            "Distribuição de nota": grade_distribution
+        }
 
+        response = make_response(response_data)
 
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
 
-
-
+    return response
