@@ -3,6 +3,7 @@ from app import app  # Importe a sua aplicação Flask aqui
 from flask import Flask, jsonify
 from flask.testing import FlaskClient
 
+
 class TestSubjectBlueprint(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()

@@ -1,7 +1,5 @@
 import unittest
 from app import app  # Supondo que app seja a sua aplicação Flask
-from flask import Flask, jsonify
-from flask.testing import FlaskClient
 
 class TestHistoricoBlueprint(unittest.TestCase):
     def setUp(self):

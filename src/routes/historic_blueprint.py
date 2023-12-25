@@ -10,8 +10,7 @@ from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 historic_blueprint = Blueprint('historico', __name__)
 
 
-# listar historico escolar 
-@historic_blueprint.route('/historico', methods=['GET'])
+@historic_blueprint.route('/historic', methods=['GET'])
 def list_all_historic():
     try:
         historicos = Historico.query.all()
@@ -24,38 +23,38 @@ def list_all_historic():
     return response
 
 
-# listar historico escolar pelo id do aluno
-@historic_blueprint.route('/historico/<string:cpf_aluno>', methods=['GET'])
-def get_historic_by_cpf(cpf_aluno):
+@historic_blueprint.route('/historic/get_historic_by_cpf/<string:student_cpf>', methods=['GET'])
+def get_history_by_cpf(student_cpf):
     try:
-        resultados = []
+        results = []
 
-        historicos = Historico.query.filter(Historico.cpf_aluno == cpf_aluno).all()
+        histories = Historico.query.filter(Historico.cpf_aluno == student_cpf).all()
 
-        for historico in historicos:
-            resultado = {
-                "id": historico.id,
-                "cpf_aluno": historico.cpf_aluno,
-                "id_disciplina": historico.id_disciplina,
-                "status": historico.status,
-                "ano": historico.ano,
-                "semestre": historico.semestre,
-                "nota": historico.nota,
-                "nome_disciplina": Disciplina.query.get(historico.id_disciplina).nome,
+        for history in histories:
+            result = {
+                "id": history.id,
+                "student_cpf": history.cpf_aluno,
+                "discipline_id": history.id_disciplina,
+                "status": history.status,
+                "year": history.ano,
+                "semester": history.semestre,
+                "grade": history.nota,
+                "discipline_name": Disciplina.query.get(history.id_disciplina).nome,
             }
 
-            resultados.append(resultado)
+            results.append(result)
 
-        response = make_response({"historicos": resultados})
+        response = make_response({"histories": results})
 
     except Exception as e:
         response = make_response({"error": str(e)})
-        response.status_code = 500  # Internal Server Error
+        response.status_code = 500
 
     return response
 
 
-@historic_blueprint.route('/historico/<int:id_aluno>/<int:id_disciplina>', methods=['GET'])
+
+@historic_blueprint.route('/historic/get_historic_by_ids/<int:id_aluno>/<int:id_disciplina>', methods=['GET'])
 def get_historic_by_ids(id_aluno, id_disciplina):
     try:
         if not Aluno.query.get(id_aluno):
@@ -89,26 +88,26 @@ def get_historic_by_ids(id_aluno, id_disciplina):
     return response
 
 
-@historic_blueprint.route("/alunos_matriculados", methods=["GET"])
-def alunos_matriculados():
+@historic_blueprint.route("/historic/enrolled_students", methods=["GET"])
+def enrolled_students():
     try:
-        alunos_matriculados = Aluno.query.join(
+        enrolled_students = Aluno.query.join(
             Historico, Aluno.cpf == Historico.cpf_aluno
         ).filter(
             Historico.status == 1
         ).all()
 
-        resultados = []
-        for aluno in alunos_matriculados:
-            resultado = {
-                "cpf": aluno.cpf,
-                "nome": aluno.nome,
-                "arg_class": aluno.arg_class,
-                "ano_entrada": aluno.ano_entrada,
+        results = []
+        for student in enrolled_students:
+            result = {
+                "cpf": student.cpf,
+                "nome": student.nome,
+                "arg_class": student.arg_class,
+                "ano_entrada": student.ano_entrada,
             }
-            resultados.append(resultado)
+            results.append(result)
 
-        response_data = {"resultados": resultados}
+        response_data = {"results": results}
         response = make_response(response_data)
         response.status_code = 200
 
@@ -119,29 +118,29 @@ def alunos_matriculados():
     return response
 
 
-@historic_blueprint.route("/taxa_retencao/<int:ano>", methods=["GET"])
-def get_taxa_retencao(ano):
+
+@historic_blueprint.route("/historic/get_retention_rate/<int:year>", methods=["GET"])
+def get_retention_rate(year):
     try:
-        # Contagem de alunos retidos
-        query_retidos = Historico.query.filter(
-            Historico.ano == ano,
+        retained_query = Historico.query.filter(
+            Historico.ano == year,
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
-        query_total_alunos = Historico.query.filter(
-            Historico.ano == ano
+        total_students_query = Historico.query.filter(
+            Historico.ano == year
         ).count()
 
-        if query_total_alunos > 0:
-            taxa_retencao = (query_retidos / query_total_alunos) * 100
+        if total_students_query > 0:
+            retention_rate = (retained_query / total_students_query) * 100
         else:
-            taxa_retencao = 0
+            retention_rate = 0
 
         response_data = {
-            "ano": ano,
-            "total_alunos": query_total_alunos,
-            "retidos": query_retidos,
-            "taxa_retencao": taxa_retencao
+            "year": year,
+            "total_students": total_students_query,
+            "retained": retained_query,
+            "retention_rate": retention_rate
         }
 
         response = make_response(response_data)
@@ -154,24 +153,24 @@ def get_taxa_retencao(ano):
     return response
 
 
-@historic_blueprint.route("/taxa_aprovacao_global", methods=["GET"])
-def get_taxa_aprovacao_global():
+@historic_blueprint.route("/historic/get_global_approval_rate", methods=["GET"])
+def get_global_approval_rate():
     try:
-        query_aprovados = Historico.query.filter(
+        approved_query = Historico.query.filter(
             (Historico.status == 1) | (Historico.status == 2)
         ).count()
 
-        query_total_alunos = Historico.query.count()
+        total_students_query = Historico.query.count()
 
-        if query_total_alunos > 0:
-            taxa_aprovacao_global = (query_aprovados / query_total_alunos) * 100
+        if total_students_query > 0:
+            global_approval_rate = (approved_query / total_students_query) * 100
         else:
-            taxa_aprovacao_global = 0
+            global_approval_rate = 0
 
         response_data = {
-            "total_alunos": query_total_alunos,
-            "aprovados": query_aprovados,
-            "taxa_aprovacao_global": taxa_aprovacao_global
+            "total_alunos": total_students_query,
+            "aprovados": approved_query,
+            "taxa_aprovacao_global": global_approval_rate
         }
 
         response = make_response(response_data)
@@ -184,28 +183,30 @@ def get_taxa_aprovacao_global():
     return response
 
 
-@historic_blueprint.route("/taxa_sucesso/<int:ano>", methods=["GET"])
-def get_taxa_sucesso_ano(ano):
+@historic_blueprint.route("/historic/get_success_rate_year/<int:year>", methods=["GET"])
+def get_success_rate_year(year):
     try:
-        query_aprovados = Historico.query.filter(
-            Historico.ano == ano,
+        success_rate = 0
+
+        approved_query = Historico.query.filter(
+            Historico.ano == year,
             (Historico.status == 1) | (Historico.status == 2)
         ).count()
 
-        query_total_alunos = Historico.query.filter(
-            Historico.ano == ano
+        total_students_query = Historico.query.filter(
+            Historico.ano == year
         ).count()
 
-        if query_total_alunos > 0:
-            taxa_sucesso = (query_aprovados / query_total_alunos) * 100
+        if total_students_query > 0:
+            success_rate = (approved_query / total_students_query) * 100
         else:
-            taxa_sucesso = 0
+            success_rate = 0
 
         response_data = {
-            "ano": ano,
-            "total_alunos": query_total_alunos,
-            "aprovados": query_aprovados,
-            "taxa_sucesso": taxa_sucesso
+            "ano": year,
+            "total_alunos": total_students_query,
+            "aprovados": approved_query,
+            "taxa_sucesso": success_rate
         }
 
         response = make_response(response_data)
@@ -218,7 +219,7 @@ def get_taxa_sucesso_ano(ano):
     return response
 
 
-@historic_blueprint.route("/taxa_desistencia/<int:subject_id>", methods=["GET"])
+@historic_blueprint.route("/historic/get_abandonment_by_subject/<int:subject_id>", methods=["GET"])
 def get_abandonment_by_subject(subject_id):
     try:
         subject = Disciplina.query.filter(Disciplina.id == subject_id)
@@ -253,7 +254,7 @@ def get_abandonment_by_subject(subject_id):
     return response
 
 
-@historic_blueprint.route('/historico/subjects_by_student', methods=["GET"])
+@historic_blueprint.route('/historic/subjects_by_student', methods=["GET"])
 def subjects_by_student():
     try:
         result = 0
@@ -289,7 +290,7 @@ def subjects_by_student():
     return response
 
 
-@historic_blueprint.route('/historico', methods=['POST'])
+@historic_blueprint.route('/historic', methods=['POST'])
 def create_historic():
     try:
         new_historic = Historico(request.json)
@@ -359,4 +360,3 @@ def delete_historic(id):
         response.status_code = 500  # Internal Server Error
 
     return response
-  
