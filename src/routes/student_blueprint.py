@@ -369,6 +369,68 @@ def reprovacoes_aluno(cpf):
 
     return response
 
+  
+# media dos alunos por componente curricular 
+@student_blueprint.route('/mediaComponenteCurricular', methods=['GET'])
+def media_componente_curricular():
+    try:
+        # coletar todas as disciplinas
+        disciplinas = Disciplina.query.all()
+        resultado_por_disciplina = []
+
+        for disciplina in disciplinas:
+            # Filtrar os registros para a disciplina específica e os critérios desejados
+            registros_disciplina = Historico.query.filter(
+                (Historico.id_disciplina == disciplina.id) &
+                ((Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4) | (Historico.status == 5))
+            ).all()
+
+            # Calcular a soma das notas dos alunos na disciplina
+            soma_notas_disciplina = sum(registro.nota for registro in registros_disciplina)
+
+            # Verificar o total de alunos na disciplina
+            total_alunos_disciplina = len(registros_disciplina)
+
+            # calcular a media dos alunos
+            media = soma_notas_disciplina / total_alunos_disciplina
+
+            resultado = {
+                'Disciplina:' : disciplina.nome,
+                'Total de alunos' : total_alunos_disciplina,
+                'Media:' : media
+            }
+
+            resultado_por_disciplina.append(resultado)
+
+        return resultado_por_disciplina
+
+    except Exception as e:
+        # Handle the exception here, you can log the error or return an error response
+        return {'error': str(e)}
+        
+
+@student_blueprint.route('/disciplinasCursadas/<aluno>', methods=['GET'])
+def disciplinas_cursadas(aluno):
+    try:
+        disciplinas = Disciplina.query.all()
+        disciplinas_cursadas = []
+
+        for disciplina in disciplinas:
+            # Filtrar os registros para a disciplina específica já cursada
+            disciplina_cursada = Historico.query.filter(
+                (Historico.id_disciplina == disciplina.id) & ((Historico.cpf_aluno == aluno) & ((Historico.status == 1) | (Historico.status == 2)))
+            ).first()  # Alteração aqui para obter apenas um registro
+
+            if disciplina_cursada:
+                disciplinas_cursadas.append(disciplina.nome)
+
+        return disciplinas_cursadas
+
+    except Exception as e:
+        # Lidar com a exceção aqui, você pode registrar o erro ou retornar uma resposta de erro
+        return {'error': str(e)}
+
+        
 @student_blueprint.route("/distribuicao_aluno/<cpf>", methods=["GET"])
 def distribuicao_aluno(cpf):
     try:
@@ -402,4 +464,3 @@ def distribuicao_aluno(cpf):
         response.status_code = 500
 
     return response
-  

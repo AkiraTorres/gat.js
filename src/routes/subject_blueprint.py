@@ -4,6 +4,8 @@ from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 from models.db import db
 from models.Disciplina import Disciplina
 from models.Historico import Historico
+from models.Aluno import Aluno
+from models.Professor import Professor
 from sqlalchemy import func
 
 subject_blueprint = Blueprint('disciplinas', __name__)
@@ -398,6 +400,76 @@ def get_approval_rate_disciplina(id_disciplina):
     return response
 
 
+@subject_blueprint.route("/TaxaFrequenciaDisciplina", methods=["GET"])
+def taxa_disciplinas():
+    #todas as disciplinas 
+    disciplinas_list = Disciplina.query.all()
+    total_alunos = Aluno.query.all()
+    taxa = 0
+    response = []
+    for disciplina in disciplinas_list:
+        
+        currentStudents = Historico.query.filter(
+            Historico.id_disciplina == disciplina.id,
+            (Historico.status == 5)
+        ).all()
+
+        taxa = len(currentStudents)/len(total_alunos)
+
+        current = {
+            "Disciplina" : disciplina.id,
+            "Taxa de frequência" : taxa
+        }
+        response.append(current)
+        
+    return response
+
+
+
+@subject_blueprint.route("/taxaDesistenciaGeral", methods=["GET"])
+def taxa_desistencia():
+    # Encontrar a quantidade total de alunos
+    total_alunos = Aluno.query.count()
+
+    # Ver todos os alunos que têm o status 4 ou 6
+    estudantes_desistentes = Historico.query.filter(
+        (Historico.status == 4) | (Historico.status == 6)
+    ).distinct(Historico.cpf_aluno).count()
+
+    # Calcular a taxa de desistência geral
+    taxa_desistencia = (estudantes_desistentes / total_alunos) * 100 if total_alunos != 0 else 0
+
+    print(f"total de alunos {total_alunos}")
+    print(f"total de alunos {estudantes_desistentes}")
+
+    response = {
+        'Taxa de disistencia' : taxa_desistencia
+    }
+
+    return response
+
+
+@subject_blueprint.route("/taxaAprovaçãoDisciplinaProfessor", methods=["GET"])
+def taxa_aprovação_disciplina_professor():
+    # Encontrar a quantidade total de alunos
+    total_alunos = Aluno.query.count()
+
+    # Ver todos os alunos que têm o status 4 ou 6
+    estudantes_desistentes = Historico.query.filter(
+        (Historico.status == 4) | (Historico.status == 6)
+    ).distinct(Historico.cpf_aluno).count()
+
+    # Calcular a taxa de desistência geral
+    taxa_desistencia = (estudantes_desistentes / total_alunos) * 100 if total_alunos != 0 else 0
+
+    print(f"total de alunos {total_alunos}")
+    print(f"total de alunos {estudantes_desistentes}")
+
+    response = {
+        'Taxa de disistencia' : taxa_desistencia
+    }
+
+    
 @subject_blueprint.route("/reprovacoes_disciplina/<int:id>", methods=["GET"])
 def reprovacoes_disciplina(id):
     try:
@@ -423,6 +495,53 @@ def reprovacoes_disciplina(id):
     return response
 
 
+@subject_blueprint.route("/taxaAprovacaoPorProfessor", methods=["GET"])
+def taxa_aprovacao_por_professor():
+    # Encontrar todos os professores
+    professores = Professor.query.all()
+
+    resultado_por_professor = []
+
+    # Iterar sobre todos os professores
+    for professor in professores:
+        # Encontrar todas as disciplinas ministradas pelo professor
+        disciplinas_do_professor = Disciplina.query.filter_by(matricula_professor=professor.matricula).all()
+
+        print(f"forfessor: {professor.nome}, tem essas disciplinas: {disciplinas_do_professor}")
+
+        # Inicializar contadores
+        total_alunos = 0
+        alunos_aprovados = 0
+
+        # Calcular a taxa de aprovação para cada disciplina
+        for disciplina in disciplinas_do_professor:
+            # Contar o número de alunos que foram aprovados na disciplina
+            alunos_aprovados_disciplina = Historico.query.filter(
+                (Historico.id_disciplina == disciplina.id) & ((Historico.status == 1) | ( Historico.status == 2))   # Assumindo que o status 1 representa aprovação
+            ).count()
+
+            # Contar o número total de alunos na disciplina
+            total_alunos_disciplina = Historico.query.filter(
+                Historico.id_disciplina == disciplina.id
+            ).count()
+
+            # Adicionar ao total geral
+            total_alunos += total_alunos_disciplina
+            alunos_aprovados += alunos_aprovados_disciplina
+
+        # Calcular a taxa de aprovação geral para o professor
+        taxa_aprovacao_professor = (alunos_aprovados / total_alunos) * 100 if total_alunos != 0 else 0
+
+        # Adicionar resultado ao resultado final
+        resultado_por_professor.append({
+            "nome_professor": professor.nome,
+            "matricula_professor": professor.matricula,
+            "taxa_aprovacao": taxa_aprovacao_professor
+        })
+
+    return resultado_por_professor
+    
+    
 @subject_blueprint.route("/distribuicao_disciplina/<int:id>", methods=["GET"])
 def distribuicao_disciplina(id):
     try:
