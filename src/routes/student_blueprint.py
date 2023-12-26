@@ -393,7 +393,10 @@ def get_average_grade() -> object:
             total_students_on_subject = len(subject_historics)
 
             # calcular a media dos alunos
-            avg = sum_subject_grade / total_students_on_subject
+            if total_students_on_subject != 0:
+                avg = sum_subject_grade / total_students_on_subject
+            else:
+                avg = 0                
 
             resultado = {
                 'Subject:' : subject.nome,
