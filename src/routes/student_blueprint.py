@@ -16,7 +16,7 @@ def create_student() -> object:
     try:
         student_data = request.json
 
-        student = Aluno.query.get(student_data.cpf)
+        student = Aluno.query.get(student_data["cpf"])
         if student:
             raise StudentAlreadyExistsException(student.cpf)
 
@@ -24,7 +24,7 @@ def create_student() -> object:
         db.session.add(new_student)
         db.session.commit()
 
-        response = make_response({"created_student": student.to_json()})
+        response = make_response({"created_student": new_student.to_json()})
         response.status_code = 201
 
     except StudentAlreadyExistsException as e:
@@ -170,7 +170,7 @@ def get_credits_rate(cpf: str) -> object:
     return response
 
 
-@student_blueprint.route("/students/performance/", methods=["GET"])
+@student_blueprint.route("/students/performance", methods=["GET"])
 def performance() -> object:
     try:
         students = Aluno.query.all()
@@ -305,6 +305,8 @@ def get_overall_academic_performance() -> object:
     except Exception as e:
         response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
+    
+    return response
 
 
 @student_blueprint.route("/students/conclusion_rate/<string:cpf>", methods=["GET"])
@@ -393,7 +395,10 @@ def get_average_grade() -> object:
             total_students_on_subject = len(subject_historics)
 
             # calcular a media dos alunos
-            avg = sum_subject_grade / total_students_on_subject
+            if total_students_on_subject != 0:
+                avg = sum_subject_grade / total_students_on_subject
+            else:
+                avg = 0                
 
             resultado = {
                 'Subject:' : subject.nome,
