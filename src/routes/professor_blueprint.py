@@ -8,23 +8,23 @@ from models.Historico import Historico
 professor_blueprint = Blueprint("professor", __name__)
 
 
-@professor_blueprint.route("/professor", methods=['GET'])
-def lista_professores() -> object:
+@professor_blueprint.route("/professors", methods=['GET'])
+def list_professors() -> object:
     try:
-        resultados = []
+        results = []
 
-        professores = Professor.query.all()
+        professors = Professor.query.all()
 
-        for professor in professores:
-            resultado = {
-                "matricula": professor.matricula,
-                "nome": professor.nome,
+        for professor in professors:
+            result = {
+                "registration": professor.matricula,
+                "name": professor.nome,
                 "cpf": professor.cpf
             }
 
-            resultados.append(resultado)
+            results.append(result)
 
-        response_data = {"professores": resultados}
+        response_data = {"professors": results}
         response = make_response(response_data)
         response.status_code = 200
 
@@ -36,21 +36,22 @@ def lista_professores() -> object:
     return response
 
 
-@professor_blueprint.route("/professor/<string:cpf>", methods=["GET"])
-def buscar_professor_por_cpf(cpf) -> object:
+
+@professor_blueprint.route("/professors/<string:cpf>", methods=["GET"])
+def find_professor_by_cpf(cpf) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if professor:
-            resultado = {
-                "matricula": professor.matricula,
-                "nome": professor.nome,
+            result = {
+                "registration": professor.matricula,
+                "name": professor.nome,
                 "cpf": professor.cpf
             }
-            response_data = {"professor": resultado}
+            response_data = {"professor": result}
             response_status = 200
         else:
-            response_data = {"message": "Professor não encontrado"}
+            response_data = {"message": "Professor not found"}
             response_status = 404
 
         response = make_response(response_data)
@@ -64,26 +65,26 @@ def buscar_professor_por_cpf(cpf) -> object:
     return response
 
 
-@professor_blueprint.route("/professor/<string:cpf>", methods=["PUT"])
-def atualizar_professor(cpf) -> object:
+@professor_blueprint.route("/professors/<string:cpf>", methods=["PUT"])
+def update_professor_by_cpf(cpf) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if professor:
-            dados_atualizados = request.json
-            professor.nome = dados_atualizados.get("nome", professor.nome)
+            updated_data = request.json
+            professor.nome = updated_data.get("name", professor.nome)
 
             db.session.commit()
 
-            resultado = {
-                "matricula": professor.matricula,
-                "nome": professor.nome,
+            result = {
+                "registration": professor.matricula,
+                "name": professor.nome,
                 "cpf": professor.cpf
             }
-            response_data = {"professor_atualizado": resultado}
+            response_data = {"updated_professor": result}
             response_status = 200
         else:
-            response_data = {"message": "Professor não encontrado"}
+            response_data = {"message": "Professor not found"}
             response_status = 404
 
         response = make_response(response_data)
@@ -97,26 +98,25 @@ def atualizar_professor(cpf) -> object:
     return response
 
 
-@professor_blueprint.route("/professor/<string:cpf>", methods=["DELETE"])
-def excluir_professor(cpf) -> object:
+@professor_blueprint.route("/professors/<string:cpf>", methods=["DELETE"])
+def delete_professor_by_cpf(cpf) -> object:
     try:
-        # Verificar se o professor existe
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if professor:
-            # Excluir o professor do banco de dados
+            # Delete the professor from the database
             db.session.delete(professor)
             db.session.commit()
 
-            resultado = {
-                "matricula": professor.matricula,
-                "nome": professor.nome,
+            result = {
+                "registration": professor.matricula,
+                "name": professor.nome,
                 "cpf": professor.cpf
             }
-            response_data = {"professor_excluido": resultado}
+            response_data = {"deleted_professor": result}
             response_status = 200
         else:
-            response_data = {"message": "Professor não encontrado"}
+            response_data = {"message": "Professor not found"}
             response_status = 404
 
         response = make_response(response_data)
@@ -125,32 +125,32 @@ def excluir_professor(cpf) -> object:
     except Exception as e:
         response_data = {"error": str(e)}
         response = make_response(response_data)
-        response.status_code = 500  # Internal Server Error
+        response.status_code = 500
 
     return response
 
 
-@professor_blueprint.route("/professor", methods=["POST"])
-def criar_professor() -> object:
+@professor_blueprint.route("/professors", methods=["POST"])
+def create_professor() -> object:
     try:
-        dados_novo_professor = request.json
+        new_professor_data = request.json
 
-        novo_professor = Professor(
-            cpf=dados_novo_professor["cpf"],
-            matricula=dados_novo_professor.get("matricula"),
-            nome=dados_novo_professor.get("nome")
+        new_professor = Professor(
+            cpf=new_professor_data["cpf"],
+            matricula=new_professor_data.get("matricula"),
+            nome=new_professor_data.get("nome")
         )
 
-        db.session.add(novo_professor)
+        db.session.add(new_professor)
         db.session.commit()
 
-        resultado = {
-            "cpf": novo_professor.cpf,
-            "matricula": novo_professor.matricula,
-            "nome": novo_professor.nome
+        result = {
+            "cpf": new_professor.cpf,
+            "matricula": new_professor.matricula,
+            "nome": new_professor.nome
         }
 
-        response_data = {"professor_criado": resultado}
+        response_data = {"created_professor": result}
         response_status = 201
 
         response = make_response(response_data)
@@ -164,18 +164,18 @@ def criar_professor() -> object:
     return response
 
 
-@professor_blueprint.route("/carga_horaria_total/<int:id_matricula>", methods=["GET"])
-def carga_horaria_total_professor(id_matricula):
+@professor_blueprint.route("/professors/<int:id_matricula>/total_workload", methods=["GET"])
+def total_workload_professor(id_matricula):
     try:
-        carga_horaria_total = db.session.query(db.func.sum(Disciplina.carga_horaria)).\
+        total_workload = db.session.query(db.func.sum(Disciplina.carga_horaria)).\
             join(Professor, Disciplina.matricula_professor == Professor.matricula).\
             filter(Professor.matricula == id_matricula).scalar()
 
-        carga_horaria_total = carga_horaria_total or 0  # Isso serve para evitar que o valor seja None
+        total_workload = total_workload or 0  # This is to prevent the value from being None
 
         response_data = {
-            "id_matricula": id_matricula,
-            "carga_horaria_total": carga_horaria_total
+            "professor_id": id_matricula,
+            "total_workload": total_workload
         }
 
         response = make_response(response_data)
@@ -190,19 +190,19 @@ def carga_horaria_total_professor(id_matricula):
 
 
 # Taxa de desempenho por professor
-@professor_blueprint.route("/taxa_professor/<string:cpf>", methods=["GET"])
-def taxa_professor(cpf):
+@professor_blueprint.route("/professors/<string:cpf>/performance_rate", methods=["GET"])
+def professor_performance_rate(cpf):
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if professor:
             subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
 
-            resultado = {
-                "matricula": professor.matricula,
-                "nome": professor.nome,
+            result = {
+                "registration": professor.matricula,
+                "name": professor.nome,
                 "cpf": professor.cpf,
-                "disciplinas": [],
+                "subjects": [],
             }
 
             for subject in subjects_by_professor:
@@ -221,19 +221,19 @@ def taxa_professor(cpf):
                 performance_rate = count_total_approved / total_students if total_students > 0 else 0
 
                 subject_info = {
-                    "id_disciplina": subject.id,
-                    "nome_disciplina": subject.nome,
-                    "Total de estudantes aprovados": count_total_approved,
-                    "Total de estudantes reprovados": count_total_reproved,
-                    "Taxa de desempenho": performance_rate,
+                    "discipline_id": subject.id,
+                    "discipline_name": subject.nome,
+                    "Total students approved": count_total_approved,
+                    "Total students reproved": count_total_reproved,
+                    "Performance rate": performance_rate,
                 }
 
-                resultado["disciplinas"].append(subject_info)
+                result["subjects"].append(subject_info)
 
-            response_data = {"professor": resultado}
+            response_data = {"professor": result}
             response_status = 200
         else:
-            response_data = {"message": "Professor não encontrado"}
+            response_data = {"message": "Professor not found"}
             response_status = 404
 
         response = make_response(response_data)
@@ -248,14 +248,13 @@ def taxa_professor(cpf):
 
 
 # Avaliação média do professor
-@professor_blueprint.route("/avaliacao_professor/<string:cpf>", methods=["GET"])
-def avaliacao_professor(cpf):
+@professor_blueprint.route("/professors/<string:cpf>/evaluation", methods=["GET"])
+def professor_evaluation(cpf):
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if professor:
             subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
-
 
             total_rate = 0
             total_discipline = 0
@@ -277,21 +276,19 @@ def avaliacao_professor(cpf):
                 total_rate += performance_rate
                 total_discipline += 1
 
-
-            avaliation_rate = total_rate/total_discipline
-            avaliation = round(avaliation_rate * 10)
-            resultado = {
-                "matricula": professor.matricula,
-                "nome": professor.nome,
+            evaluation_rate = total_rate / total_discipline
+            evaluation = round(evaluation_rate * 10)
+            result = {
+                "registration": professor.matricula,
+                "name": professor.nome,
                 "cpf": professor.cpf,
-                "avaliação": avaliation
+                "evaluation": evaluation
             }
 
-
-            response_data = {"professor": resultado}
+            response_data = {"professor": result}
             response_status = 200
         else:
-            response_data = {"message": "Professor não encontrado"}
+            response_data = {"message": "Professor not found"}
             response_status = 404
 
         response = make_response(response_data)
@@ -305,46 +302,45 @@ def avaliacao_professor(cpf):
     return response
 
 
-@professor_blueprint.route("/professor/media/disciplinas", methods=["GET"])
+@professor_blueprint.route("/professors/average_subjects", methods=["GET"])
 def get_average_subjects_by_professor():
     try:
-        result = 0
+        total_subjects = 0
         professors = db.session.query(
             Professor.matricula,
             Professor.cpf,
             Professor.nome,
-            db.func.count().label('total_disciplinas')
+            db.func.count().label('total_subjects')
         ).join(
             Disciplina, Professor.matricula == Disciplina.matricula_professor,
         ).group_by(Professor.matricula).all()
 
         for professor in professors:
-            result += professor.total_disciplinas
+            total_subjects += professor.total_subjects
 
-        result = result / len(professors)
+        average_subjects = total_subjects / len(professors) if len(professors) > 0 else 0
 
-        response_data = {"average_subjects_by_professor": eval(f"{result:.2f}")}
+        response_data = {"average_subjects_by_professor": round(average_subjects, 2)}
         response = make_response(response_data)
 
     except Exception as e:
-        response = make_response({"error": e})
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
-@professor_blueprint.route("/professor/disciplinas/<identifier>", methods=["GET"])
+@professor_blueprint.route("/professors/<identifier>/subjects", methods=["GET"])
 def get_professor_subjects(identifier):
     try:
         professor = Professor.query.filter(
             (Professor.matricula == identifier) |
             (Professor.cpf == identifier)
-        )
+        ).first()
 
-        if professor.count() < 1:
+        if not professor:
             raise ProfessorNotFoundException(identifier)
-        
-        professor = professor[0]
+
         professor_subjects = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
         professor_subjects = [subject.to_json() for subject in professor_subjects]
 
@@ -356,11 +352,11 @@ def get_professor_subjects(identifier):
         response = make_response(response_data)
 
     except ProfessorNotFoundException as e:
-        response = make_response({"error": str(e)}) 
+        response = make_response({"error": str(e)})
         response.status_code = 404
 
     except Exception as e:
-        response = make_response({"error": e})
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
