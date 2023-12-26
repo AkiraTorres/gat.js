@@ -16,7 +16,7 @@ def create_student() -> object:
     try:
         student_data = request.json
 
-        student = get_student_by_cpf(student_data.cpf)
+        student = Aluno.query.get(student_data.cpf)
         if student:
             raise StudentAlreadyExistsException(student.cpf)
 

@@ -66,7 +66,7 @@ def create_subject() -> object:
         # criar um objeto disciplina
         new_subject = Disciplina(data)
 
-        if find_subject_by_id(new_subject.id):
+        if Disciplina.query.get(new_subject.id):
             raise SubjectAlreadyExistsException(new_subject.id)
 
         # adicionar no banco de dados 
@@ -114,7 +114,7 @@ def find_subject_by_id(subject_id) -> object:
 @subject_blueprint.route("/subjects/<int:subject_id>", methods=["DELETE"])
 def delete_subject_by_id(subject_id: int) -> object:
     try:
-        subject = find_subject_by_id(subject_id)
+        subject = Disciplina.query.get(subject_id)
         if not subject:
             raise SubjectNotFoundException(subject_id)
         
@@ -174,7 +174,7 @@ def get_most_failed_subjects(year: int, semester: int) -> object:
 @subject_blueprint.route("/subjects/rate/fails/<int:subject_id>", methods=["GET"])
 def get_subject_fails_rate(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(subject_id):
+        if not Disciplina.query.get(subject_id):
             raise SubjectNotFoundException(subject_id)
 
         failed_students = Historico.query.filter(
@@ -215,7 +215,7 @@ def get_subject_fails_rate(subject_id: int) -> object:
 @subject_blueprint.route("/subjects/grade/average/<int:subject_id>", methods=["GET"])
 def get_subject_average_grade(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(subject_id):
+        if not Disciplina.query.get(subject_id):
             raise SubjectNotFoundException(subject_id)
 
         sum_of_grades = Historico.query.with_entities(func.sum(Historico.nota)).filter(
@@ -255,7 +255,7 @@ def get_subject_average_grade(subject_id: int) -> object:
 @subject_blueprint.route("/subjects/rate/retention/<int:subject_id>", methods=["GET"])
 def get_retention_rate_disciplina(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(subject_id):
+        if not Disciplina.query.get(subject_id):
             raise SubjectNotFoundException(subject_id)
 
         count_aproved_students = Historico.query.filter(
@@ -295,7 +295,7 @@ def get_retention_rate_disciplina(subject_id: int) -> object:
 @subject_blueprint.route("/subjects/students/failed_by_times/<int:subject_id>/<int:times>", methods=["GET"])
 def get_students_that_failed_more_than_times(subject_id: int, times: int) -> object:
     try:
-        if not find_subject_by_id(subject_id):
+        if not Disciplina.query.get(subject_id):
             raise SubjectNotFoundException(subject_id)
 
         failed = Historico.query.filter(
@@ -369,7 +369,7 @@ def get_average_workload_by_subject() -> object:
 @subject_blueprint.route("/subject/approval/<int:subject_id>", methods=["GET"])
 def get_approval_rate_disciplina(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(subject_id):
+        if not Disciplina.query.get(subject_id):
             raise SubjectNotFoundException(subject_id)
 
         count_aproved_students = Historico.query.filter(
@@ -470,7 +470,7 @@ def get_total_abandonment_rate() -> object:
 @subject_blueprint.route("/subjects/fails/<int:id>", methods=["GET"])
 def get_fails_by_subject(id: int) -> object:
     try:
-        if not find_subject_by_id(id):
+        if not Disciplina.query.get(id):
             raise SubjectNotFoundException(id)
 
         fails = Historico.query.filter(Historico.id_disciplina == id, (Historico.status == 3) | (Historico.status == 4)).count()
@@ -549,7 +549,7 @@ def get_approval_by_professor() -> object:
 @subject_blueprint.route("/subjects/grade/distribution/<int:id>", methods=["GET"])
 def get_grade_distribution_by_subject(id: int) -> object:
     try:
-        if not find_subject_by_id(id):
+        if not Disciplina.query.get(id):
             raise SubjectNotFoundException(id)
         
         subjects_count = Historico.query.filter(Historico.id_disciplina == id).count()

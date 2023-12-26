@@ -3,7 +3,7 @@ from models.db import db
 class Disciplina(db.Model):
     __tablename__ = "disciplina"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     codigo = db.Column(db.String(100), nullable=False, unique=True)
     nome = db.Column(db.String(100), nullable=False)
     carga_horaria = db.Column(db.Integer)
