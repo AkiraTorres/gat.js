@@ -66,7 +66,7 @@ def create_subject() -> object:
         # criar um objeto disciplina
         new_subject = Disciplina(data)
 
-        if find_subject_by_id(new_subject.id):
+        if Disciplina.query.get(new_subject.id):
             raise SubjectAlreadyExistsException(new_subject.id)
 
         # adicionar no banco de dados 
