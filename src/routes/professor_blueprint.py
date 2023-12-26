@@ -132,7 +132,7 @@ def create_professor() -> object:
     try:
         new_professor_data = request.json
 
-        if find_professor_by_cpf(new_professor_data["cpf"]):
+        if Professor.query.get(new_professor_data["cpf"]):
             raise ProfessorAlreadyExistsException(new_professor_data["cpf"])
 
         new_professor = Professor(
