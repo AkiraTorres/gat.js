@@ -16,7 +16,7 @@ def create_student() -> object:
     try:
         student_data = request.json
 
-        student = Aluno.query.get(student_data.cpf)
+        student = Aluno.query.get(student_data["cpf"])
         if student:
             raise StudentAlreadyExistsException(student.cpf)
 
@@ -25,7 +25,7 @@ def create_student() -> object:
         db.session.add(new_student)
         db.session.commit()
 
-        response = make_response({"created_student": student.to_json()})
+        response = make_response({"created_student": new_student.to_json()})
         response.status_code = 201
 
     except StudentAlreadyExistsException as e:
