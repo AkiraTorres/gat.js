@@ -131,14 +131,10 @@ def create_professor() -> object:
     try:
         new_professor_data = request.json
 
-        if Professor.query.filter(Professor.cpf == new_professor_data["cpf"]):
+        if Professor.query.filter(Professor.cpf == new_professor_data["cpf"]).first():
             raise ProfessorAlreadyExistsException(new_professor_data["cpf"])
 
-        new_professor = Professor(
-            cpf=new_professor_data["cpf"],
-            matricula=new_professor_data.get("matricula"),
-            nome=new_professor_data.get("nome")
-        )
+        new_professor = Professor(new_professor_data)
 
         db.session.add(new_professor)
         db.session.commit()
