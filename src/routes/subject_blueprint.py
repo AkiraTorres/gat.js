@@ -578,8 +578,8 @@ def get_grade_distribution_by_subject(id: int) -> object:
 
     return response
 
-@subject_blueprint.route("/taxa_graduacao", methods=["GET"])
-def taxa_graduacao():
+@subject_blueprint.route("/subjects/rate/graduate", methods=["GET"])
+def graduation_rate():
     try:
         students = Aluno.query.all()
         students_total = Aluno.query.count()
