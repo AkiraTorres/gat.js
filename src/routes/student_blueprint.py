@@ -8,29 +8,29 @@ from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from exceptions.Student.StudentAlreadyExistsException import StudentAlreadyExistsException
 
 # cria o blueprint do aluno
-student_blueprint = Blueprint('alunos', __name__)
+student_blueprint = Blueprint('student', __name__)
 
 # rota para criar um aluno 
-@student_blueprint.route('/alunos', methods=['POST'])
-def create_aluno():
+@student_blueprint.route('/students', methods=['POST'])
+def create_student() -> object:
     try:
-        dados_aluno = request.json
+        student_data = request.json
 
-        aluno = get_aluno_by_cpf(dados_aluno.cpf)
-        if aluno:
-            raise StudentAlreadyExistsException(aluno.cpf)
+        student = get_student_by_cpf(student_data.cpf)
+        if student:
+            raise StudentAlreadyExistsException(student.cpf)
 
-        # novo_aluno = Aluno(nome, cpf, arg_class, ano_entrada)
-        novo_aluno = Aluno(dados_aluno)
-        db.session.add(novo_aluno)
+        # novo_student = student(nome, cpf, arg_class, ano_entrada)
+        new_student = Aluno(student_data)
+        db.session.add(new_student)
         db.session.commit()
 
-        response = make_response({'message': 'Aluno criado com sucesso', 'cpf': novo_aluno.cpf})
+        response = make_response({"created_student": student.to_json()})
         response.status_code = 201
 
-    except StudentNotFoundException as e:
+    except StudentAlreadyExistsException as e:
         response = make_response({"error": str(e)}) 
-        response.status_code = 422
+        response.status_code = 403
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -40,12 +40,11 @@ def create_aluno():
 
 
 #rota para listar todos os alunos 
-@student_blueprint.route("/alunos", methods=["GET"])
-def list_alunos():
+@student_blueprint.route("/students", methods=["GET"])
+def list_students() -> object:
     try:
-        alunos_list = Aluno.query.all()
-        response = make_response([aluno.to_json() for aluno in alunos_list])
-        response.status_code = 200
+        students_list = Aluno.query.all()
+        response = make_response([aluno.to_json() for aluno in students_list])
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -55,15 +54,14 @@ def list_alunos():
 
 
 # encontrar aluno por id
-@student_blueprint.route("/alunos/<cpf>", methods=["GET"])
-def get_aluno_by_cpf(cpf):
+@student_blueprint.route("/students/<string:cpf>", methods=["GET"])
+def get_student_by_cpf(cpf: str) -> object:
     try:
-        aluno = Aluno.query.get(cpf)
-        if not aluno:
+        student = Aluno.query.get(cpf)
+        if not student:
             raise StudentNotFoundException(cpf)
 
-        response = make_response(aluno.to_json())
-        response.status_code = 200
+        response = make_response(student.to_json())
 
     except StudentNotFoundException as e:
         response = make_response({"error": str(e)}) 
@@ -77,28 +75,27 @@ def get_aluno_by_cpf(cpf):
 
 
 # Atualizar aluno por id
-@student_blueprint.route('/alunos/<cpf>', methods=['PUT'])
-def update_aluno(cpf):
+@student_blueprint.route('/students/<string:cpf>', methods=['PUT'])
+def update_student(cpf: str) -> object:
     try:
-        aluno = Aluno.query.get(cpf)
+        student = Aluno.query.get(cpf)
 
-        if not aluno:
-            raise StudentAlreadyExistsException(aluno.cpf)
+        if not student:
+            raise StudentAlreadyExistsException(student.cpf)
 
-        dados_atualizados = request.json
+        updated_data = request.json
 
-        aluno.nome = dados_atualizados.get('nome', aluno.nome)
-        # aluno.cpf = dados_atualizados.get('cpf', aluno.cpf)  # não atualizar o cpf, pois é a chave primária
-        aluno.arg_class = dados_atualizados.get('arg_class', aluno.arg_class)
-        aluno.ano_entrada = dados_atualizados.get('ano_entrada', aluno.ano_entrada)
+        student.nome = updated_data.get('nome', student.nome)
+        student.arg_class = updated_data.get('arg_class', student.arg_class)
+        student.ano_entrada = updated_data.get('ano_entrada', student.ano_entrada)
 
         db.session.commit()
 
-        response = make_response({'message': 'Aluno atualizado com sucesso'})
+        response = make_response({"updated_student": student.to_json()})
 
     except StudentNotFoundException as e:
         response = make_response({"error": str(e)}) 
-        response.status_code = 422
+        response.status_code = 404
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -108,18 +105,18 @@ def update_aluno(cpf):
 
 
 # Deletar aluno por id
-@student_blueprint.route('/alunos/<cpf>', methods=['DELETE'])
-def delete_aluno_por_cpf(cpf):
+@student_blueprint.route('/students/<string:cpf>', methods=['DELETE'])
+def delete_aluno_por_cpf(cpf: str) -> object:
     try:
-        aluno = Aluno.query.get(cpf)
+        student = Aluno.query.get(cpf)
 
-        if not aluno:
-            raise StudentNotFoundException(aluno.cpf)
+        if not student:
+            raise StudentNotFoundException(student.cpf)
 
-        db.session.delete(aluno)
+        db.session.delete(student)
         db.session.commit()
 
-        response = make_response({'message': 'Aluno excluído com sucesso'})
+        response = make_response({"deleted_student": student.to_json()})
 
     except StudentNotFoundException as e:
         response = make_response({"error": str(e)}) 
@@ -133,8 +130,8 @@ def delete_aluno_por_cpf(cpf):
 
 
 # Taxa de aproveitamento de créditos
-@student_blueprint.route("/creditos_aluno/<cpf>", methods=["GET"])
-def get_credits_rate(cpf):
+@student_blueprint.route("/students/credit/<string:cpf>", methods=["GET"])
+def get_credits_rate(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
         if not student:
@@ -156,28 +153,26 @@ def get_credits_rate(cpf):
         credit_rate = credits_cursed / credits_not_cursed
 
         response_data = {
-            "Créditos aproveitados": credits_cursed,
-            "Créditos não aproveitados" : credits_not_cursed, # Bad result (BD insert)
-            "Taxa de aproveitamento de créditos" : credit_rate
+            "used_credits": credits_cursed,
+            "unused_credits" : credits_not_cursed, # Bad result (BD insert)
+            "credit_utilization_rate" : credit_rate
             }
 
         response = make_response(response_data)
-        response.status_code = 200
 
     except StudentNotFoundException as e:
         response = make_response({"error": str(e)}) 
-        response.status_code = 422
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
-@student_blueprint.route("/desempenho/", methods=["GET"])
-def performance():
+@student_blueprint.route("/students/performance/", methods=["GET"])
+def performance() -> object:
     try:
         students = Aluno.query.all()
 
@@ -208,14 +203,13 @@ def performance():
         response_data = {
             "Enem": total_enem_students,
             "SSA": total_ssa_students,
-            "Numero de aprovações de alunos nas disciplinas que entraram pelo Enem": total_sum_enem_students,
-            "Numero de aprovações de alunos nas disciplinas que entraram pelo SSA": total_sum_ssa_students,
-            "Taxa de aproveitamento SSA": ssa_rate,
-            "Taxa de aproveitamento Enem": enem_rate
+            "Number of approvals in subjects by student that entered through Enem": total_sum_enem_students,
+            "Number of approvals in subjects by student that entered through Enem": total_sum_ssa_students,
+            "SSA_utilization_rate": ssa_rate,
+            "Enem_utilization_rate": enem_rate
         }
 
         response = make_response(response_data)
-        response.status_code = 200
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -224,8 +218,8 @@ def performance():
     return response
 
   
-@student_blueprint.route("/alunos/disciplinas/eletivas/<string:cpf>", methods=["GET"])
-def get_how_many_electives(cpf: int):
+@student_blueprint.route("/students/subjects/electives/<string:cpf>", methods=["GET"])
+def get_how_many_electives(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
         if not student:
@@ -260,8 +254,8 @@ def get_how_many_electives(cpf: int):
 
     return response
 
-@student_blueprint.route("/alunos/disciplinas/obrigatorias/<string:cpf>", methods=["GET"])
-def get_how_many_mandatory(cpf: int):
+@student_blueprint.route("/students/subjects/mandatory/<string:cpf>", methods=["GET"])
+def get_how_many_mandatory(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
         if not student:
@@ -297,8 +291,8 @@ def get_how_many_mandatory(cpf: int):
     return response
 
 
-@student_blueprint.route("/alunos/desempenho/geral", methods=["GET"])
-def get_overall_academic_performance():
+@student_blueprint.route("/students/performance/overall", methods=["GET"])
+def get_overall_academic_performance() -> object:
     try:
         data = db.session.query(func.avg(Historico.nota).label('avg')).filter(Historico.nota != -999).all()
         total_subjects = Disciplina.query.count()
@@ -311,8 +305,8 @@ def get_overall_academic_performance():
         response.status_code = 500  # Internal Server Error
 
         
-@student_blueprint.route("/taxa_conclusao/<cpf>", methods=["GET"])
-def taxa_conclusao(cpf):
+@student_blueprint.route("/students/conclusion_rate/<string:cpf>", methods=["GET"])
+def get_student_conclusion_rate(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
 
@@ -327,12 +321,15 @@ def taxa_conclusao(cpf):
         approval_rate = approved/50
 
         response_data = {
-            "Matérias aprovadas": approved,
-            "Taxa de conclusão": approval_rate
+            "Approved subjects": approved,
+            "Conclusion rate": approval_rate
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -340,8 +337,8 @@ def taxa_conclusao(cpf):
 
     return response
 
-@student_blueprint.route("/reprovacoes_aluno/<cpf>", methods=["GET"])
-def reprovacoes_aluno(cpf):
+@student_blueprint.route("/students/fails/<string:cpf>", methods=["GET"])
+def get_student_fails(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
 
@@ -352,16 +349,18 @@ def reprovacoes_aluno(cpf):
         
         if(fails >= 10):
             response_data = {
-                "Reprovações" : fails,
-                "Alerta" : "Você está com muitas reprovações, entre em contato com a escolaridade"
+                "Fails" : fails
             }
         else:
             response_data = {
-                "Reprovações" : fails
+                "Fails" : fails
             }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -371,68 +370,81 @@ def reprovacoes_aluno(cpf):
 
   
 # media dos alunos por componente curricular 
-@student_blueprint.route('/mediaComponenteCurricular', methods=['GET'])
-def media_componente_curricular():
+@student_blueprint.route('/students/average/grade', methods=['GET'])
+def get_average_grade() -> object:
     try:
         # coletar todas as disciplinas
-        disciplinas = Disciplina.query.all()
-        resultado_por_disciplina = []
+        subjects = Disciplina.query.all()
+        result_by_subject = []
 
-        for disciplina in disciplinas:
+        for subject in subjects:
             # Filtrar os registros para a disciplina específica e os critérios desejados
-            registros_disciplina = Historico.query.filter(
-                (Historico.id_disciplina == disciplina.id) &
+            subject_historics = Historico.query.filter(
+                (Historico.id_disciplina == subject.id) &
                 ((Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4) | (Historico.status == 5))
             ).all()
 
             # Calcular a soma das notas dos alunos na disciplina
-            soma_notas_disciplina = sum(registro.nota for registro in registros_disciplina)
+            sum_subject_grade = sum(historic.nota for historic in subject_historics)
 
             # Verificar o total de alunos na disciplina
-            total_alunos_disciplina = len(registros_disciplina)
+            total_students_on_subject = len(subject_historics)
 
             # calcular a media dos alunos
-            media = soma_notas_disciplina / total_alunos_disciplina
+            avg = sum_subject_grade / total_students_on_subject
 
             resultado = {
-                'Disciplina:' : disciplina.nome,
-                'Total de alunos' : total_alunos_disciplina,
-                'Media:' : media
+                'Subject:' : subject.nome,
+                'Total number of students in the subject' : total_students_on_subject,
+                'Average:' : avg
             }
 
-            resultado_por_disciplina.append(resultado)
+            result_by_subject.append(resultado)
 
-        return resultado_por_disciplina
+        response = make_response(result_by_subject)
 
     except Exception as e:
         # Handle the exception here, you can log the error or return an error response
-        return {'error': str(e)}
+        response = make_response({'error': str(e)})
+        response.status_code = 404
+    
+    return response
         
 
-@student_blueprint.route('/disciplinasCursadas/<aluno>', methods=['GET'])
-def disciplinas_cursadas(aluno):
+@student_blueprint.route('/students/approved/<string:cpf>', methods=['GET'])
+def get_student_approved_subjects(cpf: str) -> object:
     try:
-        disciplinas = Disciplina.query.all()
-        disciplinas_cursadas = []
+        subjects = Disciplina.query.all()
+        approved_subjects = []
 
-        for disciplina in disciplinas:
+        if not Aluno.query.get(cpf):
+            raise StudentNotFoundException(cpf)
+
+        for subject in subjects:
             # Filtrar os registros para a disciplina específica já cursada
-            disciplina_cursada = Historico.query.filter(
-                (Historico.id_disciplina == disciplina.id) & ((Historico.cpf_aluno == aluno) & ((Historico.status == 1) | (Historico.status == 2)))
+            approved_subject = Historico.query.filter(
+                (Historico.id_disciplina == subject.id) & ((Historico.cpf_aluno == cpf) & ((Historico.status == 1) | (Historico.status == 2)))
             ).first()  # Alteração aqui para obter apenas um registro
 
-            if disciplina_cursada:
-                disciplinas_cursadas.append(disciplina.nome)
+            if approved_subject:
+                approved_subjects.append(subject.nome)
 
-        return disciplinas_cursadas
+        response = make_response(approved_subjects)
+
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
         # Lidar com a exceção aqui, você pode registrar o erro ou retornar uma resposta de erro
-        return {'error': str(e)}
+        response = make_response({'error': str(e)})
+        response.status_code = 500
+
+    return response
 
         
-@student_blueprint.route("/distribuicao_aluno/<cpf>", methods=["GET"])
-def distribuicao_aluno(cpf):
+@student_blueprint.route("/students/grade/distibution/<string:cpf>", methods=["GET"])
+def get_student_grade_distribution(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
 
@@ -446,18 +458,21 @@ def distribuicao_aluno(cpf):
         grades_sum = 0
 
         for subject in subject_studied:
-            historico = Historico.query.filter(Historico.id == subject.id).first()
-            if historico:
-                grades_sum += historico.nota
+            historic = Historico.query.filter(Historico.id == subject.id).first()
+            if historic:
+                grades_sum += historic.nota
 
         grade_distribution = grades_sum/subjects_count
 
         response_data = {
-            "Distribuição de nota": grade_distribution
+            "Grade distribution": grade_distribution
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except StudentNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
         response = make_response({"error": str(e)})
