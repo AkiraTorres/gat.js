@@ -11,7 +11,7 @@ historic_blueprint = Blueprint('historico', __name__)
 
 
 @historic_blueprint.route('/historic', methods=['GET'])
-def list_all_historic():
+def list_all_historic() -> object:
     try:
         historicos = Historico.query.all()
         response = make_response([historico.to_json() for historico in historicos])
@@ -24,7 +24,7 @@ def list_all_historic():
 
 
 @historic_blueprint.route('/historic/get_historic_by_cpf/<string:student_cpf>', methods=['GET'])
-def get_history_by_cpf(student_cpf):
+def get_history_by_cpf(student_cpf: str) -> object:
     try:
         results = []
 
@@ -53,9 +53,8 @@ def get_history_by_cpf(student_cpf):
     return response
 
 
-
 @historic_blueprint.route('/historic/get_historic_by_ids/<int:id_aluno>/<int:id_disciplina>', methods=['GET'])
-def get_historic_by_ids(id_aluno, id_disciplina):
+def get_historic_by_ids(id_aluno: int, id_disciplina: int) -> object:
     try:
         if not Aluno.query.get(id_aluno):
             raise StudentNotFoundException(id_aluno)
@@ -69,15 +68,7 @@ def get_historic_by_ids(id_aluno, id_disciplina):
 
         response = make_response([historico.to_json() for historico in historicos])
 
-    except StudentNotFoundException as e:
-        response = make_response({"error": str(e)})
-        response.status_code = 404
-
-    except SubjectNotFoundException as e:
-        response = make_response({"error": str(e)})
-        response.status_code = 404
-
-    except HistoricNotFoundException as e:
+    except (StudentNotFoundException, SubjectNotFoundException, HistoricNotFoundException) as e:
         response = make_response({"error": str(e)})
         response.status_code = 404
 
@@ -89,7 +80,7 @@ def get_historic_by_ids(id_aluno, id_disciplina):
 
 
 @historic_blueprint.route("/historic/enrolled_students", methods=["GET"])
-def enrolled_students():
+def enrolled_students() -> object:
     try:
         enrolled_students = Aluno.query.join(
             Historico, Aluno.cpf == Historico.cpf_aluno
@@ -107,9 +98,7 @@ def enrolled_students():
             }
             results.append(result)
 
-        response_data = {"results": results}
-        response = make_response(response_data)
-        response.status_code = 200
+        response = make_response({"results": results})
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -118,9 +107,8 @@ def enrolled_students():
     return response
 
 
-
 @historic_blueprint.route("/historic/get_retention_rate/<int:year>", methods=["GET"])
-def get_retention_rate(year):
+def get_retention_rate(year: int):
     try:
         retained_query = Historico.query.filter(
             Historico.ano == year,
@@ -144,7 +132,6 @@ def get_retention_rate(year):
         }
 
         response = make_response(response_data)
-        response.status_code = 200
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -154,7 +141,7 @@ def get_retention_rate(year):
 
 
 @historic_blueprint.route("/historic/get_global_approval_rate", methods=["GET"])
-def get_global_approval_rate():
+def get_global_approval_rate() -> object:
     try:
         approved_query = Historico.query.filter(
             (Historico.status == 1) | (Historico.status == 2)
@@ -168,13 +155,12 @@ def get_global_approval_rate():
             global_approval_rate = 0
 
         response_data = {
-            "total_alunos": total_students_query,
-            "aprovados": approved_query,
-            "taxa_aprovacao_global": global_approval_rate
+            "total_students": total_students_query,
+            "approved": approved_query,
+            "global_approval_rate": global_approval_rate
         }
 
         response = make_response(response_data)
-        response.status_code = 200
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -184,7 +170,7 @@ def get_global_approval_rate():
 
 
 @historic_blueprint.route("/historic/get_success_rate_year/<int:year>", methods=["GET"])
-def get_success_rate_year(year):
+def get_success_rate_year(year: int) -> object:
     try:
         success_rate = 0
 
@@ -203,14 +189,13 @@ def get_success_rate_year(year):
             success_rate = 0
 
         response_data = {
-            "ano": year,
-            "total_alunos": total_students_query,
-            "aprovados": approved_query,
-            "taxa_sucesso": success_rate
+            "year": year,
+            "total_students": total_students_query,
+            "approved": approved_query,
+            "success_rate": success_rate
         }
 
         response = make_response(response_data)
-        response.status_code = 200
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -220,14 +205,14 @@ def get_success_rate_year(year):
 
 
 @historic_blueprint.route("/historic/get_abandonment_by_subject/<int:subject_id>", methods=["GET"])
-def get_abandonment_by_subject(subject_id):
+def get_abandonment_by_subject(subject_id: int) -> object:
     try:
         subject = Disciplina.query.filter(Disciplina.id == subject_id)
 
         if not subject:
             raise SubjectNotFoundException(subject_id)
         
-        abandoment_total = Historico.query.filter(
+        total_abandonment = Historico.query.filter(
             Historico.id_disciplina == subject_id,
             Historico.status == 4
         ).count()
@@ -236,16 +221,20 @@ def get_abandonment_by_subject(subject_id):
             Historico.id_disciplina == subject_id
         ).count()
 
-        abandonment_rate = (abandoment_total / total) * 100
+        abandonment_rate = (total_abandonment / total) * 100
 
         response_data = {
-            "abandoment": abandoment_total,
+            "total_abandonment": total_abandonment,
             "total": total,
             "abandonment_rate": float(f"{abandonment_rate:.2f}")
         }
 
         response = make_response(response_data)
-        response.status_code = 200
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404  # Internal Server Error
+
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -255,7 +244,7 @@ def get_abandonment_by_subject(subject_id):
 
 
 @historic_blueprint.route('/historic/subjects_by_student', methods=["GET"])
-def subjects_by_student():
+def subjects_by_student() -> object:
     try:
         result = 0
 
@@ -291,7 +280,7 @@ def subjects_by_student():
 
 
 @historic_blueprint.route('/historic', methods=['POST'])
-def create_historic():
+def create_historic() -> object:
     try:
         new_historic = Historico(request.json)
 
@@ -310,7 +299,7 @@ def create_historic():
 
 
 @historic_blueprint.route('/historico/<int:id>', methods=['PUT'])
-def update_historic(id):
+def update_historic(id) -> object:
     try:
         historic = Historico.query.get(id)
         if not historic:
@@ -339,7 +328,7 @@ def update_historic(id):
 
 
 @historic_blueprint.route('/historico/<int:id>', methods=["DELETE"])
-def delete_historic(id):
+def delete_historic(id) -> object:
     try:
         historic = Historico.query.get(id)
 
