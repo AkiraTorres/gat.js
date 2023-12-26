@@ -26,29 +26,27 @@ class TestSubjectBlueprint(unittest.TestCase):
 
     def test_create_subject(self):
         nova_disciplina = {
-            "id": 234,
             "carga_horaria": 45,
-            "codigo": "TST103",
+            "codigo": "TSTAJ3",
             "credito": 3,
             "nome": "Nova Disciplina",
-            "tipo": "Optativa", 
-            "matricula_professor": "2"
+            "tipo": 2
         }
 
         response = self.app.post('/subjects', json=nova_disciplina)
-        self.assertEqual(response.status_code, 403) #Attention
+        self.assertEqual(response.status_code, 201)
 
     def test_find_subject_by_id(self):
-        response = self.app.get('/subjects/3')
+        response = self.app.get('/subjects/60')
         self.assertEqual(response.status_code, 200)
     def test_delete_subject_by_id(self):
-        response = self.app.delete('/subjects/4')
-        self.assertEqual(response.status_code, 500) #Attentio
+        response = self.app.delete('/subjects/10')
+        self.assertEqual(response.status_code, 200)
     def test_get_most_failed_subjects(self):
-        response = self.app.get('/subjects/most_failed/2017/2')
+        response = self.app.get('/subjects/most_failed/2017/30')
         self.assertEqual(response.status_code, 200)
     def test_get_subject_fails_rate(self):
-        response = self.app.get('/subjects/rate/fails/4')
+        response = self.app.get('/subjects/rate/fails/2')
         self.assertEqual(response.status_code, 200)
     def test_get_subject_average_grade(self):
         response = self.app.get('/subjects/grade/average/24')
@@ -66,7 +64,7 @@ class TestSubjectBlueprint(unittest.TestCase):
         response = self.app.get('/subjects/average/workload')
         self.assertEqual(response.status_code, 200)
     def test_get_approval_rate_disciplina(self):
-        response = self.app.get('/subject/approval/1')
+        response = self.app.get('/subject/approval/24')
         self.assertEqual(response.status_code, 200)
     def test_get_students_attending_subject_rate(self):
         response = self.app.get('/subjects/rate/attending_students')
@@ -75,15 +73,14 @@ class TestSubjectBlueprint(unittest.TestCase):
         response = self.app.get('/subjects/rate/total_abandonment')
         self.assertEqual(response.status_code, 200)
     def test_get_fails_by_subject(self):
-        response = self.app.get('/subjects/fails/1')
+        response = self.app.get('/subjects/fails/24')
         self.assertEqual(response.status_code, 200)
     def test_get_approval_by_professor(self):
         response = self.app.get('/subjects/approval/professor')
         self.assertEqual(response.status_code, 200)
     def test_get_grade_distribution_by_subject(self):
-        response = self.app.get('/subjects/grade/distribution/1')
+        response = self.app.get('/subjects/grade/distribution/24')
         self.assertEqual(response.status_code, 200)
-
 
 if __name__ == '__main__':
     unittest.main()
