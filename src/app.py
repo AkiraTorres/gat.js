@@ -20,11 +20,14 @@ aluno = db.relationship('Aluno', backref='historico_aluno')
 disciplina = db.relationship('Disciplina', backref='historico_disciplina')
 historico = db.relationship('Historico', backref='aluno', cascade='all, delete-orphan')
 
-
 app.register_blueprint(student_blueprint)
 app.register_blueprint(historic_blueprint)
 app.register_blueprint(subject_blueprint)
 app.register_blueprint(professor_blueprint)
+
+def create_app():
+    return app
+
 
 if __name__ == "__main__":
     app.run()

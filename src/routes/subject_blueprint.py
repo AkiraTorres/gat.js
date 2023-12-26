@@ -508,6 +508,9 @@ def get_approval_by_professor() -> object:
             # Inicializar contadores
             total_subjects = 0
             failed_subjects = 0
+            total_students = 0
+            approved_students = 0
+
 
             # Calcular a taxa de aprovação para cada disciplina
             for subject in professor_subjects:

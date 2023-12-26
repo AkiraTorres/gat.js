@@ -254,6 +254,7 @@ def get_how_many_electives(cpf: str) -> object:
 
     return response
 
+
 @student_blueprint.route("/students/subjects/mandatory/<string:cpf>", methods=["GET"])
 def get_how_many_mandatory(cpf: str) -> object:
     try:
@@ -300,9 +301,12 @@ def get_overall_academic_performance() -> object:
         response_data = data[0].avg / total_subjects * 100
         response = make_response({"overall_academic_performance": f"{response_data:.2f}%"})
 
+        return response
+
     except Exception as e:
         response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
+
 
         
 @student_blueprint.route("/students/conclusion_rate/<string:cpf>", methods=["GET"])
