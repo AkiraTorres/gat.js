@@ -7,7 +7,7 @@ from models.Disciplina import Disciplina
 from models.Aluno import Aluno
 from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 
-historic_blueprint = Blueprint('historico', __name__)
+historic_blueprint = Blueprint('historic', __name__)
 
 
 @historic_blueprint.route('/historic', methods=['GET'])
@@ -287,8 +287,7 @@ def create_historic() -> object:
         db.session.add(new_historic)
         db.session.commit()
 
-        response_data = new_historic.to_json()
-        response = make_response(response_data)
+        response = make_response({"created_historic": new_historic.to_json()})
         response.status_code = 201
 
     except Exception as e:
@@ -314,7 +313,7 @@ def update_historic(id) -> object:
 
         db.session.commit()
 
-        response = make_response({"message": f"Historic with id {id} updated successfully"})
+        response = make_response({"updated_historic": historic.to_json()})
         
     except HistoricNotFoundException as e:
         response = make_response({"error": str(e)})
@@ -338,7 +337,7 @@ def delete_historic(id) -> object:
         db.session.delete(historic)
         db.session.commit()
 
-        response = make_response({"message": f"Historic with {id} deleted successfully"})
+        response = make_response({"deleted_historic": historic.to_json()})
         
     except HistoricNotFoundException as e:
         response = make_response({"error": str(e)})
