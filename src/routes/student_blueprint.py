@@ -20,7 +20,6 @@ def create_student() -> object:
         if student:
             raise StudentAlreadyExistsException(student.cpf)
 
-        # novo_student = student(nome, cpf, arg_class, ano_entrada)
         new_student = Aluno(student_data)
         db.session.add(new_student)
         db.session.commit()
@@ -308,7 +307,6 @@ def get_overall_academic_performance() -> object:
         response.status_code = 500  # Internal Server Error
 
 
-        
 @student_blueprint.route("/students/conclusion_rate/<string:cpf>", methods=["GET"])
 def get_student_conclusion_rate(cpf: str) -> object:
     try:

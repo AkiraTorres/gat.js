@@ -25,9 +25,6 @@ app.register_blueprint(historic_blueprint)
 app.register_blueprint(subject_blueprint)
 app.register_blueprint(professor_blueprint)
 
-def create_app():
-    return app
-
 
 if __name__ == "__main__":
     app.run()
