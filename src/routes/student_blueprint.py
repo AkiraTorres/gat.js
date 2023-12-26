@@ -303,6 +303,8 @@ def get_overall_academic_performance() -> object:
     except Exception as e:
         response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
+    
+    return response
 
         
 @student_blueprint.route("/students/conclusion_rate/<string:cpf>", methods=["GET"])
