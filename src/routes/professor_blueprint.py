@@ -1,5 +1,6 @@
 from flask import Blueprint, request, make_response
 from exceptions.Professor.ProfessorNotFoundException import ProfessorNotFoundException
+from exceptions.Professor.ProfessorAlreadyExistsException import ProfessorAlreadyExistsException
 from models.Professor import Professor
 from models.db import db
 from models.Disciplina import Disciplina
@@ -24,107 +25,103 @@ def list_professors() -> object:
 
             results.append(result)
 
-        response_data = {"professors": results}
-        response = make_response(response_data)
-        response.status_code = 200
+        response = make_response({"professors": results})
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
-
 @professor_blueprint.route("/professors/<string:cpf>", methods=["GET"])
-def find_professor_by_cpf(cpf) -> object:
+def find_professor_by_cpf(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
-        if professor:
-            result = {
-                "registration": professor.matricula,
-                "name": professor.nome,
-                "cpf": professor.cpf
-            }
-            response_data = {"professor": result}
-            response_status = 200
-        else:
-            response_data = {"message": "Professor not found"}
-            response_status = 404
+        if not professor:
+            raise ProfessorNotFoundException(cpf)
+            
+        result = {
+            "registration": professor.matricula,
+            "name": professor.nome,
+            "cpf": professor.cpf
+        }
+        response_data = {"professor": result}
 
         response = make_response(response_data)
-        response.status_code = response_status
+
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
 @professor_blueprint.route("/professors/<string:cpf>", methods=["PUT"])
-def update_professor_by_cpf(cpf) -> object:
+def update_professor_by_cpf(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
-        if professor:
-            updated_data = request.json
-            professor.nome = updated_data.get("name", professor.nome)
+        if not professor:
+            raise ProfessorNotFoundException(cpf)
 
-            db.session.commit()
+        updated_data = request.json
+        professor.nome = updated_data.get("name", professor.nome)
 
-            result = {
-                "registration": professor.matricula,
-                "name": professor.nome,
-                "cpf": professor.cpf
-            }
-            response_data = {"updated_professor": result}
-            response_status = 200
-        else:
-            response_data = {"message": "Professor not found"}
-            response_status = 404
+        db.session.commit()
+
+        result = {
+            "registration": professor.matricula,
+            "name": professor.nome,
+            "cpf": professor.cpf
+        }
+        response_data = {"updated_professor": result}
 
         response = make_response(response_data)
-        response.status_code = response_status
+
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
 @professor_blueprint.route("/professors/<string:cpf>", methods=["DELETE"])
-def delete_professor_by_cpf(cpf) -> object:
+def delete_professor_by_cpf(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
-        if professor:
-            # Delete the professor from the database
-            db.session.delete(professor)
-            db.session.commit()
+        if not professor:
+            raise ProfessorNotFoundException(cpf)
 
-            result = {
-                "registration": professor.matricula,
-                "name": professor.nome,
-                "cpf": professor.cpf
-            }
-            response_data = {"deleted_professor": result}
-            response_status = 200
-        else:
-            response_data = {"message": "Professor not found"}
-            response_status = 404
+        # Delete the professor from the database
+        db.session.delete(professor)
+        db.session.commit()
+
+        result = {
+            "registration": professor.matricula,
+            "name": professor.nome,
+            "cpf": professor.cpf
+        }
+        response_data = {"deleted_professor": result}
 
         response = make_response(response_data)
-        response.status_code = response_status
+        
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
@@ -134,6 +131,9 @@ def delete_professor_by_cpf(cpf) -> object:
 def create_professor() -> object:
     try:
         new_professor_data = request.json
+
+        if find_professor_by_cpf(new_professor_data["cpf"]):
+            raise ProfessorAlreadyExistsException(new_professor_data["cpf"])
 
         new_professor = Professor(
             cpf=new_professor_data["cpf"],
@@ -145,27 +145,27 @@ def create_professor() -> object:
         db.session.commit()
 
         result = {
+            "registration": new_professor.matricula,
             "cpf": new_professor.cpf,
-            "matricula": new_professor.matricula,
-            "nome": new_professor.nome
+            "name": new_professor.nome
         }
 
-        response_data = {"created_professor": result}
-        response_status = 201
+        response = make_response({"created_professor": result})
+        response.status_code = 201
 
-        response = make_response(response_data)
-        response.status_code = response_status
+    except ProfessorAlreadyExistsException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 403
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
 @professor_blueprint.route("/professors/<int:id_matricula>/total_workload", methods=["GET"])
-def total_workload_professor(id_matricula):
+def total_workload_professor(id_matricula: int) -> object:
     try:
         total_workload = db.session.query(db.func.sum(Disciplina.carga_horaria)).\
             join(Professor, Disciplina.matricula_professor == Professor.matricula).\
@@ -179,11 +179,9 @@ def total_workload_professor(id_matricula):
         }
 
         response = make_response(response_data)
-        response.status_code = 200
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500  # Internal Server Error
 
     return response
@@ -191,57 +189,55 @@ def total_workload_professor(id_matricula):
 
 # Taxa de desempenho por professor
 @professor_blueprint.route("/professors/<string:cpf>/performance_rate", methods=["GET"])
-def professor_performance_rate(cpf):
+def professor_performance_rate(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if professor:
-            subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+            raise ProfessorNotFoundException(cpf)
 
-            result = {
-                "registration": professor.matricula,
-                "name": professor.nome,
-                "cpf": professor.cpf,
-                "subjects": [],
+        subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+
+        result = {
+            "registration": professor.matricula,
+            "name": professor.nome,
+            "cpf": professor.cpf,
+            "subjects": [],
+        }
+
+        for subject in subjects_by_professor:
+            count_total_approved = Historico.query.filter(
+                (Historico.id_disciplina == subject.id) &
+                ((Historico.status == 1) | (Historico.status == 2))
+            ).count()
+
+            count_total_reproved = Historico.query.filter(
+                (Historico.id_disciplina == subject.id) &
+                ((Historico.status == 3) | (Historico.status == 4))
+            ).count()
+
+            total_students = count_total_approved + count_total_reproved
+
+            performance_rate = count_total_approved / total_students if total_students > 0 else 0
+
+            subject_info = {
+                "discipline_id": subject.id,
+                "discipline_name": subject.nome,
+                "Total students approved": count_total_approved,
+                "Total students reproved": count_total_reproved,
+                "Performance rate": performance_rate,
             }
 
-            for subject in subjects_by_professor:
-                count_total_approved = Historico.query.filter(
-                    (Historico.id_disciplina == subject.id) &
-                    ((Historico.status == 1) | (Historico.status == 2))
-                ).count()
+            result["subjects"].append(subject_info)
 
-                count_total_reproved = Historico.query.filter(
-                    (Historico.id_disciplina == subject.id) &
-                    ((Historico.status == 3) | (Historico.status == 4))
-                ).count()
+        response = make_response({"professor": result})
 
-                total_students = count_total_approved + count_total_reproved
-
-                performance_rate = count_total_approved / total_students if total_students > 0 else 0
-
-                subject_info = {
-                    "discipline_id": subject.id,
-                    "discipline_name": subject.nome,
-                    "Total students approved": count_total_approved,
-                    "Total students reproved": count_total_reproved,
-                    "Performance rate": performance_rate,
-                }
-
-                result["subjects"].append(subject_info)
-
-            response_data = {"professor": result}
-            response_status = 200
-        else:
-            response_data = {"message": "Professor not found"}
-            response_status = 404
-
-        response = make_response(response_data)
-        response.status_code = response_status
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
@@ -249,61 +245,59 @@ def professor_performance_rate(cpf):
 
 # Avaliação média do professor
 @professor_blueprint.route("/professors/<string:cpf>/evaluation", methods=["GET"])
-def professor_evaluation(cpf):
+def professor_evaluation(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
-        if professor:
-            subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
+        if not professor:
+            raise ProfessorNotFoundException(cpf)
 
-            total_rate = 0
-            total_discipline = 0
-            for subject in subjects_by_professor:
-                count_total_approved = Historico.query.filter(
-                    (Historico.id_disciplina == subject.id) &
-                    ((Historico.status == 1) | (Historico.status == 2))
-                ).count()
+        subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
 
-                count_total_reproved = Historico.query.filter(
-                    (Historico.id_disciplina == subject.id) &
-                    ((Historico.status == 3) | (Historico.status == 4))
-                ).count()
+        total_rate = 0
+        total_discipline = 0
+        for subject in subjects_by_professor:
+            count_total_approved = Historico.query.filter(
+                (Historico.id_disciplina == subject.id) &
+                ((Historico.status == 1) | (Historico.status == 2))
+            ).count()
 
-                total_students = count_total_approved + count_total_reproved
+            count_total_reproved = Historico.query.filter(
+                (Historico.id_disciplina == subject.id) &
+                ((Historico.status == 3) | (Historico.status == 4))
+            ).count()
 
-                performance_rate = count_total_approved / total_students if total_students > 0 else 0
+            total_students = count_total_approved + count_total_reproved
 
-                total_rate += performance_rate
-                total_discipline += 1
+            performance_rate = count_total_approved / total_students if total_students > 0 else 0
 
-            evaluation_rate = total_rate / total_discipline
-            evaluation = round(evaluation_rate * 10)
-            result = {
-                "registration": professor.matricula,
-                "name": professor.nome,
-                "cpf": professor.cpf,
-                "evaluation": evaluation
-            }
+            total_rate += performance_rate
+            total_discipline += 1
 
-            response_data = {"professor": result}
-            response_status = 200
-        else:
-            response_data = {"message": "Professor not found"}
-            response_status = 404
+        evaluation_rate = total_rate / total_discipline
+        evaluation = round(evaluation_rate * 10)
+        result = {
+            "registration": professor.matricula,
+            "name": professor.nome,
+            "cpf": professor.cpf,
+            "evaluation": evaluation
+        }
 
-        response = make_response(response_data)
-        response.status_code = response_status
+        response = make_response({"professor": result})
+
+    except ProfessorNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404
 
     except Exception as e:
-        response_data = {"error": str(e)}
-        response = make_response(response_data)
+        response = make_response({"error": str(e)})
         response.status_code = 500
 
     return response
 
 
 @professor_blueprint.route("/professors/average_subjects", methods=["GET"])
-def get_average_subjects_by_professor():
+def get_average_subjects_by_professor() -> object:
     try:
         total_subjects = 0
         professors = db.session.query(
@@ -331,7 +325,7 @@ def get_average_subjects_by_professor():
 
 
 @professor_blueprint.route("/professors/<identifier>/subjects", methods=["GET"])
-def get_professor_subjects(identifier):
+def get_professor_subjects(identifier) -> object:
     try:
         professor = Professor.query.filter(
             (Professor.matricula == identifier) |

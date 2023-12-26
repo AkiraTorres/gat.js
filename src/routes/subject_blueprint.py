@@ -8,14 +8,14 @@ from models.Aluno import Aluno
 from models.Professor import Professor
 from sqlalchemy import func
 
-subject_blueprint = Blueprint('disciplinas', __name__)
+subject_blueprint = Blueprint('subject', __name__)
 
 
-@subject_blueprint.route("/disciplinas", methods=["GET"])
-def list_disciplinas():
+@subject_blueprint.route("/subjects", methods=["GET"])
+def list_subjects() -> object:
     try:
-        disciplinas_list = Disciplina.query.all()
-        response = make_response([disc.to_json() for disc in disciplinas_list])
+        subjects_list = Disciplina.query.all()
+        response = make_response([subject.to_json() for subject in subjects_list])
     
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -24,27 +24,27 @@ def list_disciplinas():
     return response
 
 
-@subject_blueprint.route("/disciplinas/<int:id_disciplina>", methods=["PUT"])
-def update_disciplina(id_disciplina):
+@subject_blueprint.route("/subjects/<int:subject_id>", methods=["PUT"])
+def update_disciplina(subject_id: int) -> object:
     try:
         # retornar a disciplina do banco de dados 
-        disciplina = Disciplina.query.get(id_disciplina)
+        subject = Disciplina.query.get(subject_id)
 
-        if not disciplina:
-            raise SubjectNotFoundException(id_disciplina)
+        if not subject:
+            raise SubjectNotFoundException(subject_id)
 
         # coletar as informações da requisição
-        dados_atualizados = request.json
-        disciplina.carga_horaria = dados_atualizados.get('carga_horaria', disciplina.carga_horaria)
-        disciplina.codigo = dados_atualizados.get('codigo', disciplina.codigo)
-        disciplina.credito = dados_atualizados.get('credito', disciplina.credito)
-        disciplina.nome = dados_atualizados.get('nome', disciplina.nome)
-        disciplina.tipo = dados_atualizados.get('tipo', disciplina.tipo)
+        updated_data = request.json
+        subject.carga_horaria = updated_data.get('carga_horaria', subject.carga_horaria)
+        subject.codigo = updated_data.get('codigo', subject.codigo)
+        subject.credito = updated_data.get('credito', subject.credito)
+        subject.nome = updated_data.get('nome', subject.nome)
+        subject.tipo = updated_data.get('tipo', subject.tipo)
 
         # subir pro banco de dados 
         db.session.commit()
 
-        response = make_response({'message': 'Disciplina atualizada com sucesso'})
+        response = make_response({"updated_subject": subject.to_json()})
 
     except SubjectNotFoundException as e:
         response = make_response({"error": str(e)})
@@ -57,24 +57,24 @@ def update_disciplina(id_disciplina):
     return response
 
 
-@subject_blueprint.route("/disciplinas", methods=["POST"])
-def create_subject():
+@subject_blueprint.route("/subjects", methods=["POST"])
+def create_subject() -> object:
     try:
         # coletar os dados
-        dados_disciplina = request.json
+        data = request.json
 
         # criar um objeto disciplina
-        nova_disciplina = Disciplina(dados_disciplina)
+        new_subject = Disciplina(data)
 
-        if find_subject_by_id(nova_disciplina.id):
-            raise SubjectAlreadyExistsException(nova_disciplina.id)
+        if find_subject_by_id(new_subject.id):
+            raise SubjectAlreadyExistsException(new_subject.id)
 
         # adicionar no banco de dados 
-        db.session.add(nova_disciplina)
+        db.session.add(new_subject)
         db.session.commit()
 
         # retornar resposta 
-        response = make_response({'message': 'Disciplina criada com sucesso', 'id': nova_disciplina.id})
+        response = make_response({"created_subject": new_subject.to_json()})
         response.status_code = 201
 
     except SubjectAlreadyExistsException as e:
@@ -88,22 +88,21 @@ def create_subject():
     return response
 
 
-@subject_blueprint.route("/disciplinas/<int:id_disciplina>", methods=["GET"])
-def find_subject_by_id(id_disciplina):
+@subject_blueprint.route("/subjects/<int:subject_id>", methods=["GET"])
+def find_subject_by_id(subject_id) -> object:
     try:
         # procurar disciplina pelo no banco de dados 
-        disciplina = Disciplina.query.get(id_disciplina)
+        subject = Disciplina.query.get(subject_id)
 
         # verificar se a disciplina existe 
-        if not disciplina:
-            raise SubjectNotFoundException(id_disciplina)
+        if not subject:
+            raise SubjectNotFoundException(subject_id)
 
-        response = make_response(disciplina.to_json())
+        response = make_response(subject.to_json())
         
     except SubjectNotFoundException as e:
         response = make_response({"error": str(e)})
         response.status_code = 404
-        return response
       
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -112,8 +111,8 @@ def find_subject_by_id(id_disciplina):
     return response
   
 
-@subject_blueprint.route("/disciplinas/<int:subject_id>", methods=["DELETE"])
-def delete_by_id(subject_id):
+@subject_blueprint.route("/subjects/<int:subject_id>", methods=["DELETE"])
+def delete_subject_by_id(subject_id: int) -> object:
     try:
         subject = find_subject_by_id(subject_id)
         if not subject:
@@ -122,19 +121,23 @@ def delete_by_id(subject_id):
         db.session.delete(subject)
         db.session.commit()
 
-        response = make_response({'message': f'Subject with id {subject_id} deleted successfully'})
+        response = make_response({"deleted_subject": subject.to_json()})
 
     except SubjectNotFoundException as e:
         response = make_response({"error": e})
         response.status_code = 404
 
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
     return response
 
 
-@subject_blueprint.route("/disciplinas_que_mais_reprovaram/<int:ano>/<int:semestre>", methods=["GET"])
-def disciplinas_que_mais_reprovaram(ano, semestre):
+@subject_blueprint.route("/subjects/most_failed/<int:year>/<int:semester>", methods=["GET"])
+def get_most_failed_subjects(year: int, semester: int) -> object:
     try:
-        disciplinas_reprovadas = db.session.query(
+        subjects_with_fails = db.session.query(
             Disciplina.id.label('id_disciplina'),
             Disciplina.codigo.label('codigo_disciplina'),
             Disciplina.nome.label('nome_disciplina'),
@@ -144,23 +147,22 @@ def disciplinas_que_mais_reprovaram(ano, semestre):
             Historico, Disciplina.id == Historico.id_disciplina
         ).filter(
             (Historico.status == 3) | (Historico.status == 4),
-            Historico.ano == ano,
-            Historico.semestre == semestre
+            Historico.ano == year,
+            Historico.semestre == semester
         ).group_by(Disciplina.id).order_by(db.desc('total_reprovacoes')).limit(5).all()
 
-        resultados = []
-        for disciplina in disciplinas_reprovadas:
-            resultado = {
-                "id_disciplina": disciplina.id_disciplina,
-                "codigo_disciplina": disciplina.codigo_disciplina,
-                "nome_disciplina": disciplina.nome_disciplina,
-                "carga_horaria_disciplina": disciplina.carga_horaria_disciplina,
-                "total_reprovacoes": disciplina.total_reprovacoes
+        results = []
+        for subject in subjects_with_fails:
+            result = {
+                "subject_id": subject.id_disciplina,
+                "subject_cod": subject.codigo_disciplina,
+                "subject_name": subject.nome_disciplina,
+                "subject_workload": subject.carga_horaria_disciplina,
+                "subject_total_fails": subject.total_reprovacoes
             }
-            resultados.append(resultado)
+            results.append(result)
 
-        response_data = {"resultados": resultados}
-        response = make_response(response_data)
+        response = make_response({"results": results})
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -169,31 +171,31 @@ def disciplinas_que_mais_reprovaram(ano, semestre):
     return response
 
 
-@subject_blueprint.route("/taxa_reprovacao/<int:id_disciplina>", methods=["GET"])
-def get_taxa_reprovacao_disciplina(id_disciplina):
+@subject_blueprint.route("/subjects/rate/fails/<int:subject_id>", methods=["GET"])
+def get_subject_fails_rate(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(id_disciplina):
-            raise SubjectNotFoundException(id_disciplina)
+        if not find_subject_by_id(subject_id):
+            raise SubjectNotFoundException(subject_id)
 
-        query_reprovados = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+        failed_students = Historico.query.filter(
+            Historico.id_disciplina == subject_id,
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
-        query_total_alunos = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina
+        total_students = Historico.query.filter(
+            Historico.id_disciplina == subject_id
         ).count()
 
-        if query_total_alunos > 0:
-            taxa_reprovacao = (query_reprovados / query_total_alunos) * 100
+        if total_students > 0:
+            fail_rate = (failed_students / total_students) * 100
         else:
-            taxa_reprovacao = 0
+            fail_rate = 0
 
         response_data = {
-            "id_disciplina": id_disciplina,
-            "total_alunos": query_total_alunos,
-            "reprovados": query_reprovados,
-            "taxa_reprovacao": taxa_reprovacao
+            "subject_id": subject_id,
+            "total_students": total_students,
+            "failed_students": failed_students,
+            "fail_rate": fail_rate
         }
 
         response = make_response(response_data)
@@ -210,30 +212,30 @@ def get_taxa_reprovacao_disciplina(id_disciplina):
 
 
 #Média de Notas por Disciplina
-@subject_blueprint.route("/media_disciplina/<int:id_disciplina>", methods=["GET"])
-def get_media_disciplina(id_disciplina):
+@subject_blueprint.route("/subjects/grade/average/<int:subject_id>", methods=["GET"])
+def get_subject_average_grade(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(id_disciplina):
-            raise SubjectNotFoundException(id_disciplina)
+        if not find_subject_by_id(subject_id):
+            raise SubjectNotFoundException(subject_id)
 
-        sum_of_grade = Historico.query.with_entities(func.sum(Historico.nota)).filter(
-            Historico.id_disciplina == id_disciplina,
+        sum_of_grades = Historico.query.with_entities(func.sum(Historico.nota)).filter(
+            Historico.id_disciplina == subject_id,
             (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4)
         ).scalar()
 
-        count_students = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+        total_students = Historico.query.filter(
+            Historico.id_disciplina == subject_id,
             (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
-        if count_students > 0:
-            average_grade = sum_of_grade / count_students
+        if total_students > 0:
+            average_grade = sum_of_grades / total_students
         else:
             average_grade = 0  # Handle the case where there are no students for that discipline
 
         response_data = {
-            "id_disciplina": id_disciplina,
-            "média": average_grade, # It's returning bad values (BD inserts erro)
+            "subject_id": subject_id,
+            "average": average_grade, # It's returning bad values (BD inserts erro)
         }
 
         response = make_response(response_data)
@@ -250,19 +252,19 @@ def get_media_disciplina(id_disciplina):
 
 
 # Taxa de retenção de alunos por disciplina
-@subject_blueprint.route("/retencao_disciplina/<int:id_disciplina>", methods=["GET"])
-def get_retention_rate_disciplina(id_disciplina):
+@subject_blueprint.route("/subjects/rate/retention/<int:subject_id>", methods=["GET"])
+def get_retention_rate_disciplina(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(id_disciplina):
-            raise SubjectNotFoundException(id_disciplina)
+        if not find_subject_by_id(subject_id):
+            raise SubjectNotFoundException(subject_id)
 
         count_aproved_students = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+            Historico.id_disciplina == subject_id,
             (Historico.status == 1) | (Historico.status == 2)
         ).count()
 
         count_reproved_students = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+            Historico.id_disciplina == subject_id,
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
@@ -271,10 +273,10 @@ def get_retention_rate_disciplina(id_disciplina):
         retention_rate = count_reproved_students/total_students
 
         response_data = {
-            "id_disciplina": id_disciplina,
-            "numero_de_aprovados" : count_aproved_students,
-            "numero_de_reprovados" : count_reproved_students,
-            "taxa de retenção": retention_rate
+            "subject_id": subject_id,
+            "Number of approved students" : count_aproved_students,
+            "Number of failed students" : count_reproved_students,
+            "Retention rate": retention_rate
         }
 
         response = make_response(response_data)
@@ -290,30 +292,30 @@ def get_retention_rate_disciplina(id_disciplina):
     return response
 
 
-@subject_blueprint.route("/alunos_retidos_por_disciplina_por_vezes/<int:id_disciplina>/<int:times>", methods=["GET"])
-def get_students_failed_more_than_times(id_disciplina, times):
+@subject_blueprint.route("/subjects/students/failed_by_times/<int:subject_id>/<int:times>", methods=["GET"])
+def get_students_that_failed_more_than_times(subject_id: int, times: int) -> object:
     try:
-        if not find_subject_by_id(id_disciplina):
-            raise SubjectNotFoundException(id_disciplina)
+        if not find_subject_by_id(subject_id):
+            raise SubjectNotFoundException(subject_id)
 
-        reprovados = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+        failed = Historico.query.filter(
+            Historico.id_disciplina == subject_id,
             (Historico.status == 3) | (Historico.status == 4)
         ).all()
 
-        alunos_reprovados = {}
+        failed_students = {}
 
-        for registro in reprovados:
-            aluno = registro.cpf_aluno
-            if aluno not in alunos_reprovados:
-                alunos_reprovados[aluno] = 0
-            alunos_reprovados[aluno] += 1
+        for historic in failed:
+            student = historic.cpf_aluno
+            if student not in failed_students:
+                failed_students[student] = 0
+            failed_students[student] += 1
 
-        alunos_reprovados_mais_de_vezes = [aluno for aluno, count in alunos_reprovados.items() if count > times]
+        students_that_failed_more_than_n_times = [student for student, count in failed_students.items() if count > times]
 
         response_data = {
-            "id_disciplina": id_disciplina,
-            "alunos_reprovados_mais_de_vezes": alunos_reprovados_mais_de_vezes
+            "subject_id": subject_id,
+            "students_that_failed_more_than_n_times": students_that_failed_more_than_n_times
         }
 
         response = make_response(response_data)
@@ -329,8 +331,8 @@ def get_students_failed_more_than_times(id_disciplina, times):
     return response
 
 
-@subject_blueprint.route("/disciplina/media/creditos", methods=["GET"])
-def get_average_credits_by_subject():
+@subject_blueprint.route("/subjects/average/credits", methods=["GET"])
+def get_average_credits_by_subject() -> object:
     try:
         data = db.session.query(func.avg(Disciplina.credito).label('avg')).filter(Disciplina.credito != -999)
 
@@ -346,8 +348,8 @@ def get_average_credits_by_subject():
     return response
 
 
-@subject_blueprint.route("/disciplina/media/carga_horaria", methods=["GET"])
-def get_average_workload_by_subject():
+@subject_blueprint.route("/subjects/average/workload", methods=["GET"])
+def get_average_workload_by_subject() -> object:
     try:
         data = db.session.query(func.avg(Disciplina.carga_horaria).label('avg'))
 
@@ -364,19 +366,19 @@ def get_average_workload_by_subject():
 
   
 # Taxa de aprovacao por disciplina
-@subject_blueprint.route("/aprovacao_disciplina/<int:id_disciplina>", methods=["GET"])
-def get_approval_rate_disciplina(id_disciplina):
+@subject_blueprint.route("/subject/approval/<int:subject_id>", methods=["GET"])
+def get_approval_rate_disciplina(subject_id: int) -> object:
     try:
-        if not find_subject_by_id(id_disciplina):
-            raise SubjectNotFoundException(id_disciplina)
+        if not find_subject_by_id(subject_id):
+            raise SubjectNotFoundException(subject_id)
 
         count_aproved_students = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+            Historico.id_disciplina == subject_id,
             (Historico.status == 1) | (Historico.status == 2)
         ).count()
 
         count_reproved_students = Historico.query.filter(
-            Historico.id_disciplina == id_disciplina,
+            Historico.id_disciplina == subject_id,
             (Historico.status == 3) | (Historico.status == 4)
         ).count()
 
@@ -385,13 +387,17 @@ def get_approval_rate_disciplina(id_disciplina):
         approval_rate = count_aproved_students/total_students
 
         response_data = {
-            "id_disciplina": id_disciplina,
-            "numero_de_aprovados" : count_aproved_students,
-            "numero_de_reprovados" : count_reproved_students,
-            "taxa de aprovacao": approval_rate
+            "subject_id": subject_id,
+            "number of approved students" : count_aproved_students,
+            "number of failed students" : count_reproved_students,
+            "approval rate": approval_rate
         }
 
         response = make_response(response_data)
+
+    except SubjectNotFoundException as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 404  # Internal Server Error
 
     except Exception as e:
         response = make_response({"error": str(e)})
@@ -400,78 +406,69 @@ def get_approval_rate_disciplina(id_disciplina):
     return response
 
 
-@subject_blueprint.route("/TaxaFrequenciaDisciplina", methods=["GET"])
-def taxa_disciplinas():
-    #todas as disciplinas 
-    disciplinas_list = Disciplina.query.all()
-    total_alunos = Aluno.query.all()
-    taxa = 0
-    response = []
-    for disciplina in disciplinas_list:
+@subject_blueprint.route("/subjects/rate/attending_students", methods=["GET"])
+def get_students_attending_subject_rate() -> object:
+    try:
+        #todas as disciplinas 
+        subjects_list = Disciplina.query.all()
+        total_students = Aluno.query.all()
+        rate = 0
+        result = []
+        for subject in subjects_list:
+
+            currentStudents = Historico.query.filter(
+                Historico.id_disciplina == subject.id,
+                (Historico.status == 5)
+            ).all()
+
+            rate = len(currentStudents)/len(total_students)
+
+            current = {
+                "Subject" : subject.id,
+                "Attending students rate" : rate
+            }
+            result.append(current)
+
+        response = make_response(result)
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
         
-        currentStudents = Historico.query.filter(
-            Historico.id_disciplina == disciplina.id,
-            (Historico.status == 5)
-        ).all()
+    return response
 
-        taxa = len(currentStudents)/len(total_alunos)
 
-        current = {
-            "Disciplina" : disciplina.id,
-            "Taxa de frequência" : taxa
+@subject_blueprint.route("/subjects/rate/total_abandonment", methods=["GET"])
+def get_total_abandonment_rate() -> object:
+    try:
+        # Encontrar a quantidade total de alunos
+        total_students = Aluno.query.count()
+
+        # Ver todos os alunos que têm o status 4 ou 6
+        quiting_students = Historico.query.filter(
+            (Historico.status == 4) | (Historico.status == 6)
+        ).distinct(Historico.cpf_aluno).count()
+
+        # Calcular a taxa de desistência geral
+        taxa_desistencia = (quiting_students / total_students) * 100 if total_students != 0 else 0
+        
+        result = {
+            "Total of students": total_students,
+            "Quiting students": quiting_students,
+            "Abandonment rate" : taxa_desistencia
         }
-        response.append(current)
-        
-    return response
 
+        response = make_response(result)
 
-
-@subject_blueprint.route("/taxaDesistenciaGeral", methods=["GET"])
-def taxa_desistencia():
-    # Encontrar a quantidade total de alunos
-    total_alunos = Aluno.query.count()
-
-    # Ver todos os alunos que têm o status 4 ou 6
-    estudantes_desistentes = Historico.query.filter(
-        (Historico.status == 4) | (Historico.status == 6)
-    ).distinct(Historico.cpf_aluno).count()
-
-    # Calcular a taxa de desistência geral
-    taxa_desistencia = (estudantes_desistentes / total_alunos) * 100 if total_alunos != 0 else 0
-
-    print(f"total de alunos {total_alunos}")
-    print(f"total de alunos {estudantes_desistentes}")
-
-    response = {
-        'Taxa de disistencia' : taxa_desistencia
-    }
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
 
     return response
-
-
-@subject_blueprint.route("/taxaAprovaçãoDisciplinaProfessor", methods=["GET"])
-def taxa_aprovação_disciplina_professor():
-    # Encontrar a quantidade total de alunos
-    total_alunos = Aluno.query.count()
-
-    # Ver todos os alunos que têm o status 4 ou 6
-    estudantes_desistentes = Historico.query.filter(
-        (Historico.status == 4) | (Historico.status == 6)
-    ).distinct(Historico.cpf_aluno).count()
-
-    # Calcular a taxa de desistência geral
-    taxa_desistencia = (estudantes_desistentes / total_alunos) * 100 if total_alunos != 0 else 0
-
-    print(f"total de alunos {total_alunos}")
-    print(f"total de alunos {estudantes_desistentes}")
-
-    response = {
-        'Taxa de disistencia' : taxa_desistencia
-    }
 
     
-@subject_blueprint.route("/reprovacoes_disciplina/<int:id>", methods=["GET"])
-def reprovacoes_disciplina(id):
+@subject_blueprint.route("/subjects/fails/<int:id>", methods=["GET"])
+def get_fails_by_subject(id: int) -> object:
     try:
         if not find_subject_by_id(id):
             raise SubjectNotFoundException(id)
@@ -479,7 +476,7 @@ def reprovacoes_disciplina(id):
         fails = Historico.query.filter(Historico.id_disciplina == id, (Historico.status == 3) | (Historico.status == 4)).count()
         
         response_data = {
-            "Reprovações" : fails
+            "Fails" : fails
         }
 
         response = make_response(response_data)
@@ -495,58 +492,63 @@ def reprovacoes_disciplina(id):
     return response
 
 
-@subject_blueprint.route("/taxaAprovacaoPorProfessor", methods=["GET"])
-def taxa_aprovacao_por_professor():
-    # Encontrar todos os professores
-    professores = Professor.query.all()
+@subject_blueprint.route("/subjects/approval/professor", methods=["GET"])
+def get_approval_by_professor() -> object:
+    try:
+        # Encontrar todos os professores
+        professors = Professor.query.all()
 
-    resultado_por_professor = []
+        result_by_professor = []
 
-    # Iterar sobre todos os professores
-    for professor in professores:
-        # Encontrar todas as disciplinas ministradas pelo professor
-        disciplinas_do_professor = Disciplina.query.filter_by(matricula_professor=professor.matricula).all()
+        # Iterar sobre todos os professores
+        for professor in professors:
+            # Encontrar todas as disciplinas ministradas pelo professor
+            professor_subjects = Disciplina.query.filter_by(matricula_professor=professor.matricula).all()
 
-        print(f"forfessor: {professor.nome}, tem essas disciplinas: {disciplinas_do_professor}")
+            # Inicializar contadores
+            total_subjects = 0
+            failed_subjects = 0
 
-        # Inicializar contadores
-        total_alunos = 0
-        alunos_aprovados = 0
+            # Calcular a taxa de aprovação para cada disciplina
+            for subject in professor_subjects:
+                # Contar o número de alunos que foram aprovados na disciplina
+                students_approved_in_subject = Historico.query.filter(
+                    (Historico.id_disciplina == subject.id) & ((Historico.status == 1) | ( Historico.status == 2))   # Assumindo que o status 1 representa aprovação
+                ).count()
 
-        # Calcular a taxa de aprovação para cada disciplina
-        for disciplina in disciplinas_do_professor:
-            # Contar o número de alunos que foram aprovados na disciplina
-            alunos_aprovados_disciplina = Historico.query.filter(
-                (Historico.id_disciplina == disciplina.id) & ((Historico.status == 1) | ( Historico.status == 2))   # Assumindo que o status 1 representa aprovação
-            ).count()
+                # Contar o número total de alunos na disciplina
+                total_students_in_subject = Historico.query.filter(
+                    Historico.id_disciplina == subject.id
+                ).count()
 
-            # Contar o número total de alunos na disciplina
-            total_alunos_disciplina = Historico.query.filter(
-                Historico.id_disciplina == disciplina.id
-            ).count()
+                # Adicionar ao total geral
+                total_students += total_students_in_subject
+                approved_students += students_approved_in_subject
 
-            # Adicionar ao total geral
-            total_alunos += total_alunos_disciplina
-            alunos_aprovados += alunos_aprovados_disciplina
+            # Calcular a taxa de aprovação geral para o professor
+            professor_approval_rate = (approved_students / total_students) * 100 if total_students != 0 else 0
 
-        # Calcular a taxa de aprovação geral para o professor
-        taxa_aprovacao_professor = (alunos_aprovados / total_alunos) * 100 if total_alunos != 0 else 0
+            # Adicionar resultado ao resultado final
+            professor_result = professor
+            professor_result["Approval rate"] = professor_approval_rate
 
-        # Adicionar resultado ao resultado final
-        resultado_por_professor.append({
-            "nome_professor": professor.nome,
-            "matricula_professor": professor.matricula,
-            "taxa_aprovacao": taxa_aprovacao_professor
-        })
+            result_by_professor.append(professor_result)
 
-    return resultado_por_professor
+        response = make_response(result_by_professor)
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return result_by_professor
     
     
-@subject_blueprint.route("/distribuicao_disciplina/<int:id>", methods=["GET"])
-def distribuicao_disciplina(id):
+@subject_blueprint.route("/subjects/grade/distribution/<int:id>", methods=["GET"])
+def get_grade_distribution_by_subject(id: int) -> object:
     try:
         if not find_subject_by_id(id):
             raise SubjectNotFoundException(id)
+        
         subjects_count = Historico.query.filter(Historico.id_disciplina == id).count()
 
         subject_studied = Historico.query.filter(Historico.id_disciplina == id).all()
@@ -554,14 +556,14 @@ def distribuicao_disciplina(id):
         grades_sum = 0
 
         for subject in subject_studied:
-            historico = Historico.query.filter(Historico.id == subject.id).first()
-            if historico:
-                grades_sum += historico.nota
+            historic = Historico.query.filter(Historico.id == subject.id).first()
+            if historic:
+                grades_sum += historic.nota
 
         grade_distribution = grades_sum/subjects_count
 
         response_data = {
-            "Distribuição de nota": grade_distribution
+            "Grade distribution": grade_distribution
         }
 
         response = make_response(response_data)
