@@ -1,4 +1,4 @@
-class StudentAlreadyExistsException(Exception):
+class ProfessorAlreadyExistsException(Exception):
     def __init__(self, identifier):
         self.identifier = identifier
         if len(identifier) > 4:
