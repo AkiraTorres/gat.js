@@ -171,7 +171,7 @@ def get_credits_rate(cpf: str) -> object:
     return response
 
 
-@student_blueprint.route("/students/performance/", methods=["GET"])
+@student_blueprint.route("/students/performance", methods=["GET"])
 def performance() -> object:
     try:
         students = Aluno.query.all()
