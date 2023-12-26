@@ -4,8 +4,8 @@ class Historico(db.Model):
     __tablename__ = "historico"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    cpf_aluno = db.Column(db.String(14), db.ForeignKey('aluno.cpf'), primary_key=True)  # Alterei de Integer para String para poder fazer a relação com a tabela aluno
-    id_disciplina = db.Column(db.Integer, db.ForeignKey('disciplina.id'), primary_key=True)
+    cpf_aluno = db.Column(db.String(14), db.ForeignKey('aluno.cpf'))  # Alterei de Integer para String para poder fazer a relação com a tabela aluno
+    id_disciplina = db.Column(db.Integer, db.ForeignKey('disciplina.id'))
     status = db.Column(db.Integer, nullable=False)
     ano = db.Column(db.Integer, nullable=False)
     semestre = db.Column(db.Integer, nullable=False)

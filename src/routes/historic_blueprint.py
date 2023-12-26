@@ -53,15 +53,15 @@ def get_history_by_cpf(student_cpf: str) -> object:
     return response
 
 
-@historic_blueprint.route('/historic/get_historic_by_ids/<int:id_aluno>/<int:id_disciplina>', methods=['GET'])
-def get_historic_by_ids(id_aluno: int, id_disciplina: int) -> object:
+@historic_blueprint.route('/historic/get_historic_by_ids/<string:student_cpf>/<int:subjects_id>', methods=['GET'])
+def get_historic_by_ids(student_cpf: str, subjects_id: int) -> object:
     try:
-        if not Aluno.query.get(id_aluno):
-            raise StudentNotFoundException(id_aluno)
-        if not Disciplina.query.get(id_disciplina):
-            raise SubjectNotFoundException(id_disciplina)
+        if not Aluno.query.get(student_cpf):
+            raise StudentNotFoundException(student_cpf)
+        if not Disciplina.query.get(subjects_id):
+            raise SubjectNotFoundException(subjects_id)
 
-        historicos = Historico.query.filter_by(id_aluno=id_aluno, id_disciplina=id_disciplina).all()
+        historicos = Historico.query.filter(Historico.cpf_aluno==student_cpf, Historico.id_disciplina==subjects_id).all()
 
         if not historicos:
             raise HistoricNotFoundException()
@@ -297,7 +297,7 @@ def create_historic() -> object:
     return response
 
 
-@historic_blueprint.route('/historico/<int:id>', methods=['PUT'])
+@historic_blueprint.route('/historic/<int:id>', methods=['PUT'])
 def update_historic(id) -> object:
     try:
         historic = Historico.query.get(id)
@@ -326,7 +326,7 @@ def update_historic(id) -> object:
     return response
 
 
-@historic_blueprint.route('/historico/<int:id>', methods=["DELETE"])
+@historic_blueprint.route('/historic/<int:id>', methods=["DELETE"])
 def delete_historic(id) -> object:
     try:
         historic = Historico.query.get(id)
