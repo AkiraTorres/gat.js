@@ -8,7 +8,6 @@ from models.Historico import Historico
 
 professor_blueprint = Blueprint("professor", __name__)
 
-
 @professor_blueprint.route("/professors", methods=['GET'])
 def list_professors() -> object:
     try:
@@ -132,7 +131,7 @@ def create_professor() -> object:
     try:
         new_professor_data = request.json
 
-        if Professor.query.get(new_professor_data["cpf"]):
+        if find_professor_by_cpf(new_professor_data["cpf"]):
             raise ProfessorAlreadyExistsException(new_professor_data["cpf"])
 
         new_professor = Professor(
@@ -193,7 +192,7 @@ def professor_performance_rate(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
-        if professor:
+        if not professor:
             raise ProfessorNotFoundException(cpf)
 
         subjects_by_professor = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
@@ -324,16 +323,13 @@ def get_average_subjects_by_professor() -> object:
     return response
 
 
-@professor_blueprint.route("/professors/<identifier>/subjects", methods=["GET"])
-def get_professor_subjects(identifier) -> object:
+@professor_blueprint.route("/professors/<string:cpf>/subjects", methods=["GET"])
+def get_professor_subjects(cpf: str) -> object:
     try:
-        professor = Professor.query.filter(
-            (Professor.matricula == identifier) |
-            (Professor.cpf == identifier)
-        ).first()
+        professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if not professor:
-            raise ProfessorNotFoundException(identifier)
+            raise ProfessorNotFoundException(cpf)
 
         professor_subjects = Disciplina.query.filter(Disciplina.matricula_professor == professor.matricula).all()
         professor_subjects = [subject.to_json() for subject in professor_subjects]

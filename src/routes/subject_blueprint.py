@@ -580,3 +580,43 @@ def get_grade_distribution_by_subject(id: int) -> object:
         response.status_code = 500
 
     return response
+
+@subject_blueprint.route("/subjects/rate/graduate", methods=["GET"])
+def graduation_rate():
+    try:
+        students = Aluno.query.all()
+        students_total = Aluno.query.count()
+
+        graduated = 0
+        graduated_rate = 0
+
+        for student in students:
+            mandatory_total =  0
+            approved_mandatory = 0
+    
+            approveds = Historico.query.filter(Historico.cpf_aluno == student.cpf, (Historico.status == 1) | (Historico.status == 2) | (Historico.status == 7)).all()
+            mandatories = Disciplina.query.filter(Disciplina.tipo == 1).all()
+            mandatory_total = Disciplina.query.filter(Disciplina.tipo == 1).count()
+            
+            for mandatory in mandatories:
+                for approved in approveds:
+                    if approved.id_disciplina == mandatory.id:
+                        approved_mandatory += 1
+
+            if approved_mandatory == mandatory_total:
+                graduated += 1
+        
+        graduated_rate = graduated/students_total
+
+        response_data = {
+            "taxa_graduacao" : graduated_rate
+        }
+
+        response = make_response(response_data)
+        response.status_code = 200
+
+    except Exception as e:
+        response = make_response({"error": str(e)})
+        response.status_code = 500
+
+    return response
