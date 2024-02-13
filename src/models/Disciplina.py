@@ -1,4 +1,4 @@
-from models.db import db
+from src.models.db import db
 
 class Disciplina(db.Model):
     __tablename__ = "disciplina"

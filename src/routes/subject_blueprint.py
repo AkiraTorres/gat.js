@@ -1,11 +1,11 @@
 from flask import Blueprint, request, make_response
-from exceptions.Subject.SubjectAlreadyExistsException import SubjectAlreadyExistsException
-from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
-from models.db import db
-from models.Disciplina import Disciplina
-from models.Historico import Historico
-from models.Aluno import Aluno
-from models.Professor import Professor
+from src.exceptions.Subject.SubjectAlreadyExistsException import SubjectAlreadyExistsException
+from src.exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
+from src.models.db import db
+from src.models.Disciplina import Disciplina
+from src.models.Historico import Historico
+from src.models.Aluno import Aluno
+from src.models.Professor import Professor
 from sqlalchemy import func
 
 subject_blueprint = Blueprint('subject', __name__)

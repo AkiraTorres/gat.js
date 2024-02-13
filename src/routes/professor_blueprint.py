@@ -1,10 +1,10 @@
 from flask import Blueprint, request, make_response
-from exceptions.Professor.ProfessorNotFoundException import ProfessorNotFoundException
-from exceptions.Professor.ProfessorAlreadyExistsException import ProfessorAlreadyExistsException
-from models.Professor import Professor
-from models.db import db
-from models.Disciplina import Disciplina
-from models.Historico import Historico
+from src.exceptions.Professor.ProfessorNotFoundException import ProfessorNotFoundException
+from src.exceptions.Professor.ProfessorAlreadyExistsException import ProfessorAlreadyExistsException
+from src.models.Professor import Professor
+from src.models.db import db
+from src.models.Disciplina import Disciplina
+from src.models.Historico import Historico
 
 professor_blueprint = Blueprint("professor", __name__)
 
