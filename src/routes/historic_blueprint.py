@@ -1,11 +1,11 @@
 from flask import Blueprint, request, make_response
-from src.exceptions.Historic.HistoricNotFoundException import HistoricNotFoundException
-from src.exceptions.Student.StudentNotFoundException import StudentNotFoundException
-from src.models.db import db
-from src.models.Historico import Historico
-from src.models.Disciplina import Disciplina
-from src.models.Aluno import Aluno
-from src.exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
+from exceptions.Historic.HistoricNotFoundException import HistoricNotFoundException
+from exceptions.Student.StudentNotFoundException import StudentNotFoundException
+from models.db import db
+from models.Historico import Historico
+from models.Disciplina import Disciplina
+from models.Aluno import Aluno
+from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
 from requests import Session
 
 historic_blueprint = Blueprint('historic', __name__)

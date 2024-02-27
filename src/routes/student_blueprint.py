@@ -1,11 +1,11 @@
 from flask import Blueprint, jsonify, request, make_response
-from src.models.db import db
-from src.models.Aluno import Aluno
-from src.models.Historico import Historico
-from src.models.Disciplina import Disciplina
+from models.db import db
+from models.Aluno import Aluno
+from models.Historico import Historico
+from models.Disciplina import Disciplina
 from sqlalchemy import func
-from src.exceptions.Student.StudentNotFoundException import StudentNotFoundException
-from src.exceptions.Student.StudentAlreadyExistsException import StudentAlreadyExistsException
+from exceptions.Student.StudentNotFoundException import StudentNotFoundException
+from exceptions.Student.StudentAlreadyExistsException import StudentAlreadyExistsException
 
 # cria o blueprint do aluno
 student_blueprint = Blueprint('student', __name__)

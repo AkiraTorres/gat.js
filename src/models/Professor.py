@@ -1,4 +1,4 @@
-from src.models.db import db
+from models.db import db
 
 class Professor(db.Model):
     __tablename__ = "professor"

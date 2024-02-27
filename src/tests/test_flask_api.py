@@ -14,3 +14,7 @@ class TestFlaskBase(TestCase):
     def tearDown(self):
         # self.app_context.pop()
         self.app.db.drop_all()
+
+
+    def test_create_student(self):
+        ...
