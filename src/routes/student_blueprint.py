@@ -7,6 +7,7 @@ from sqlalchemy import func
 from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from exceptions.Student.StudentAlreadyExistsException import StudentAlreadyExistsException
 
+
 # cria o blueprint do aluno
 student_blueprint = Blueprint('student', __name__)
 
