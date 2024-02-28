@@ -29,7 +29,6 @@ aluno = db.relationship('Aluno', backref='historico_aluno')
 disciplina = db.relationship('Disciplina', backref='historico_disciplina')
 historico = db.relationship('Historico', backref='aluno', cascade='all, delete-orphan')
 User = db.relationship('User', backref='usuario', cascade='all, delete-orphan')
-login = db.relationship('Login', backref='usuario', cascade='all, delete-orphan')
 
 app.config['JWT_SECRET_KEY'] = 'super-secret'
 
@@ -43,4 +42,5 @@ app.register_blueprint(User_blueprint)
 app.register_blueprint(login_blueprint)
 
 if __name__ == "__main__":
+    app.debug = True
     app.run()

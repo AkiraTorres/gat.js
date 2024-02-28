@@ -6,7 +6,7 @@ from models.Disciplina import Disciplina
 from sqlalchemy import func
 from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from exceptions.Student.StudentAlreadyExistsException import StudentAlreadyExistsException
-
+from flask_jwt_extended import jwt_required
 
 # cria o blueprint do aluno
 student_blueprint = Blueprint('student', __name__)
@@ -39,8 +39,9 @@ def create_student() -> object:
     return response
 
 
-#rota para listar todos os alunos 
+#rota para listar todos os alunos
 @student_blueprint.route("/students", methods=["GET"])
+@jwt_required()
 def list_students() -> object:
     try:
         students_list = Aluno.query.all()
