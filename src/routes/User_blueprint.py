@@ -2,11 +2,13 @@ from flask import Blueprint, request, make_response, current_app
 from models.db import db
 from werkzeug.security import generate_password_hash
 from models.usuarios import usuarios
+from flask_jwt_extended import jwt_required
 
 User_blueprint = Blueprint('User', __name__)
 
 
 @User_blueprint.route('/creat-user', methods=['POST'])
+@jwt_required()
 def register_user():
     try:
         data = request.get_json()
@@ -32,6 +34,7 @@ def register_user():
 
 # 2. Listar todos os usuários
 @User_blueprint.route('/list-user', methods=['GET'])
+@jwt_required()
 def list_user_details():
     try:
         user_details = usuarios.query.with_entities(usuarios.username, usuarios.id, usuarios.is_admin, usuarios.email, usuarios.is_active).all()
