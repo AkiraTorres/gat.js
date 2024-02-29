@@ -51,3 +51,10 @@ def login_usuarios_cookie():
 
     return jsonify({'message': 'Usuário ou senha incorretos'}), 401
 
+
+@login_blueprint.route('/logout', methods=['POST'])
+def logout_usuarios():
+    response = make_response(jsonify({'message': 'Logout realizado com sucesso'}), 200)
+    response.set_cookie('session_id', '', expires=0)
+
+    return response
