@@ -1,7 +1,4 @@
-from datetime import datetime
-
 from models.db import db
-from sqlalchemy import func
 from sqlalchemy_utils import EmailType, PasswordType
 from passlib.hash import pbkdf2_sha256
 

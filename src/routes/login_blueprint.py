@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify, make_response
 from models.usuarios import (usuarios)
 from datetime import timedelta
 from flask_jwt_extended import create_access_token, create_refresh_token
-from sqlalchemy.exc import SQLAlchemyError
 
 login_blueprint = Blueprint('login', __name__)
 

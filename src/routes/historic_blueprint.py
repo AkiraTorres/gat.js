@@ -6,7 +6,6 @@ from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Aluno import Aluno
 from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
-from requests import Session
 from flask_jwt_extended import jwt_required
 
 
