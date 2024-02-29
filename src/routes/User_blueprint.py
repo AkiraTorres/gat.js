@@ -24,6 +24,7 @@ def admin_required(fn):
 
 @User_blueprint.route('/creat-user', methods=['POST'])
 @jwt_required()
+@admin_required
 def register_user():
     try:
         data = request.get_json()
@@ -74,6 +75,7 @@ def list_user_details():
 
 @User_blueprint.route('/update-user/<string:email>', methods=['PUT'])
 @jwt_required()
+@admin_required
 def update_user(email):
     try:
         data = request.get_json()
@@ -92,9 +94,10 @@ def update_user(email):
     except Exception as e:
         return {'message': 'An error occurred while updating the user', 'error': str(e)}, 500
 
-#
+
 @User_blueprint.route('/listar-emails', methods=['GET'])
 @jwt_required()
+@admin_required
 def listar_emails():
     try:
         emails = usuarios.query.with_entities(usuarios.email).all()
@@ -107,6 +110,7 @@ def listar_emails():
 
 @User_blueprint.route('/delete-user/<string:email>', methods=['DELETE'])
 @jwt_required()
+@admin_required
 def delete_usuaurio(email):
     try:
         user = usuarios.query.filter(usuarios.email == email).first()
