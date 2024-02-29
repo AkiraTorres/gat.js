@@ -56,33 +56,25 @@ def list_user_details():
         return {'message': 'An error occurred while listing usernames', 'error': str(e)}, 500
 
 
-# @User_blueprint.route('/update-user/<str:email>', methods=['PUT'])
-# @jwt_required()
-# def update_user(email):
-#     try:
-#         data = request.get_json()
-#
-#         user = usuarios.query.filter(usuarios.email == email).first()
-#
-#         user.username = data.get('username', user.username)
-#
-#         senha = data.get('senha')
-#         if senha:
-#             user.gen_hash(senha)
-#         else:
-#             user.senha = user.senha
-#
-#         user.email = data.get('email', user.email)
-#         user.is_admin = data.get('is_admin', user.is_admin)
-#         user.is_active = data.get('is_active', user.is_active)
-#
-#         db.session.commit()
-#
-#         return {'message': 'User updated successfully'}, 200
-#
-#     except Exception as e:
-#         return {'message': 'An error occurred while updating the user', 'error': str(e)}, 500
-#
+@User_blueprint.route('/update-user/<string:email>', methods=['PUT'])
+@jwt_required()
+def update_user(email):
+    try:
+        data = request.get_json()
+        user = usuarios.query.filter(usuarios.email == email).first()
+
+        user.username = data.get('username', user.username)
+        user.senha = generate_password_hash(data.get('senha', user.senha))
+        user.email = data.get('email', user.email)
+        user.is_admin = data.get('is_admin', user.is_admin)
+        user.is_active = data.get('is_active', user.is_active)
+
+        db.session.commit()
+
+        return {'message': 'User updated successfully'}, 200
+
+    except Exception as e:
+        return {'message': 'An error occurred while updating the user', 'error': str(e)}, 500
 
 #
 @User_blueprint.route('/listar-emails', methods=['GET'])
