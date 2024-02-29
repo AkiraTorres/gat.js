@@ -1,10 +1,25 @@
-from flask import Blueprint, request, make_response, current_app
+from flask import Blueprint, request, make_response, jsonify
 from models.db import db
 from werkzeug.security import generate_password_hash
 from models.usuarios import usuarios
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from functools import wraps
+
 
 User_blueprint = Blueprint('User', __name__)
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        current_user = get_jwt_identity()
+        user = usuarios.query.filter(usuarios.username == current_user).first()
+
+        if not user.is_admin:
+            return jsonify({'message': 'Admins only!'}), 403
+
+        return fn(*args, **kwargs)
+
+    return wrapper
 
 
 @User_blueprint.route('/creat-user', methods=['POST'])
@@ -35,6 +50,7 @@ def register_user():
 # 2. Listar todos os usuários
 @User_blueprint.route('/list-user', methods=['GET'])
 @jwt_required()
+@admin_required
 def list_user_details():
     try:
         user_details = usuarios.query.with_entities(usuarios.username, usuarios.id, usuarios.is_admin, usuarios.email, usuarios.is_active).all()
