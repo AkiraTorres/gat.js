@@ -12,7 +12,7 @@ class usuarios(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Definindo a chave primária
     username = db.Column(db.String(length=100))
     email = db.Column(EmailType())
-    password = db.Column(PasswordType(schemes=['pbkdf2_sha256']))
+    senha = db.Column(db.String(length=100, collation='utf8'))
     # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
@@ -22,22 +22,22 @@ class usuarios(db.Model):
         return self.username
 
     def save(self, *args, **kwargs):
-        self.password = pbkdf2_sha256.hash(self.password)
+        self.senha = pbkdf2_sha256.hash(self.senha)
         db.session.add(self)
         db.session.commit()
 
-    def __init__(self, id, username, email, password, is_admin=False):
+    def __init__(self, id, username, email, senha, is_admin=False):
         self.id = id
         self.username = username
         self.email = email
-        self.password = pbkdf2_sha256.hash(password)
+        self.senha = pbkdf2_sha256.hash(senha)
         self.is_admin = is_admin
 
-    def gen_hash(self, password):
-        return pbkdf2_sha256.hash(password)
+    def gen_hash(self, senha):
+        return pbkdf2_sha256.hash(senha)
 
-    def check_password(self, password):
-        return pbkdf2_sha256.verify(password, self.password)
+    def check_password(self, senha):
+        return pbkdf2_sha256.verify(senha, self.senha)
 
     def get_full_name(self):
         return self.username
@@ -57,8 +57,8 @@ class usuarios(db.Model):
 
     def to_json(self):
         return {
-            'username': str(self.username),
-            'password': str(self.password),
-            'email': str(self.email),
-            'is_admin': str(self.is_admin)
+            'username': self.username,
+            'senha': self.senha,
+            'email': self.email,
+            'is_admin': self.is_admin
         }
