@@ -1,6 +1,8 @@
 import os
+import sys
 from dotenv import load_dotenv
 
+sys.path.append('../')
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv()
 
