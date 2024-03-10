@@ -6,9 +6,9 @@ from passlib.hash import pbkdf2_sha256
 class usuarios(db.Model):
     __tablename__ = 'usuarios'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Definindo a chave primária
+    # id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Definindo a chave primária
     username = db.Column(db.String(length=100))
-    email = db.Column(EmailType())
+    email = db.Column(EmailType(), primary_key=True)
     senha = db.Column(db.String(length=100, collation='utf8'))
     # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
