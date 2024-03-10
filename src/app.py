@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, make_response, jsonify
+from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 
@@ -13,9 +14,14 @@ from routes.professor_blueprint import professor_blueprint
 from routes.User_blueprint import User_blueprint
 from routes.login_blueprint import login_blueprint
 
+api_cors_config = {
+    "origins": ["http://localhost:5173"]
+}
 
 app = Flask(__name__)
-
+cors = CORS(app, resources={
+    r"/*": api_cors_config
+})
 
 env_config = os.getenv("APP_SETTINGS", "configs.config.DevelopmentConfig")
 app.config.from_object(env_config)
