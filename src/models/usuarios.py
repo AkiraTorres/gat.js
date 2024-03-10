@@ -23,8 +23,8 @@ class usuarios(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def __init__(self, id, username, email, senha, is_admin=False):
-        self.id = id
+    def __init__(self, username, email, senha, is_admin=False):
+        # self.id = id
         self.username = username
         self.email = email
         self.senha = pbkdf2_sha256.hash(senha)
