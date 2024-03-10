@@ -23,14 +23,14 @@ def admin_required(fn):
 
 
 @User_blueprint.route('/creat-user', methods=['POST'])
-@jwt_required()
-@admin_required
+# @jwt_required()
+# @admin_required
 def register_user():
     try:
         data = request.get_json()
 
         new_user = usuarios(
-            id=data.get('id'),
+            # id=data.get('id'),
             username=data.get('username'),
             senha=data.get('senha'),
             email=data['email'],
@@ -42,10 +42,10 @@ def register_user():
         db.session.add(new_user)
         db.session.commit()
 
-        return {'message': 'User created successfully'}, 201
+        return make_response({'message': 'User created successfully'}, 201)
 
     except Exception as e:
-        return {'message': 'An error occurred while creating the user', 'error': str(e)}, 500
+        return make_response({'message': 'An error occurred while creating the user', 'error': str(e)}, 500)
 
 
 # 2. Listar todos os usuários
@@ -54,11 +54,11 @@ def register_user():
 @admin_required
 def list_user_details():
     try:
-        user_details = usuarios.query.with_entities(usuarios.username, usuarios.id, usuarios.is_admin, usuarios.email, usuarios.is_active).all()
+        user_details = usuarios.query.with_entities(usuarios.username, usuarios.is_admin, usuarios.email, usuarios.is_active).all()
 
         user_details = [{
             'username': detail[0],
-            'id': detail[1],
+            # 'id': detail[1],
             'is_admin': detail[2],
             'email': detail[3],
             'is_active': detail[4]
