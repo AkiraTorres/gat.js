@@ -6,14 +6,18 @@ from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Aluno import Aluno
 from exceptions.Subject.SubjectNotFoundException import SubjectNotFoundException
+from flask_jwt_extended import jwt_required
+
 
 historic_blueprint = Blueprint('historic', __name__)
 
 
 @historic_blueprint.route('/historic', methods=['GET'])
+@jwt_required()
 def list_all_historic() -> object:
     try:
-        historicos = Historico.query.all()
+        # historicos = Historico.query.all()
+        historicos = db.session.query(Historico).all()
         response = make_response([historico.to_json() for historico in historicos])
 
     except Exception as e:
@@ -24,6 +28,7 @@ def list_all_historic() -> object:
 
 
 @historic_blueprint.route('/historic/get_historic_by_cpf/<string:student_cpf>', methods=['GET'])
+@jwt_required()
 def get_history_by_cpf(student_cpf: str) -> object:
     try:
         results = []
@@ -54,6 +59,7 @@ def get_history_by_cpf(student_cpf: str) -> object:
 
 
 @historic_blueprint.route('/historic/get_historic_by_ids/<string:student_cpf>/<int:subjects_id>', methods=['GET'])
+@jwt_required()
 def get_historic_by_ids(student_cpf: str, subjects_id: int) -> object:
     try:
         if not Aluno.query.get(student_cpf):
@@ -80,6 +86,7 @@ def get_historic_by_ids(student_cpf: str, subjects_id: int) -> object:
 
 
 @historic_blueprint.route("/historic/enrolled_students", methods=["GET"])
+@jwt_required()
 def enrolled_students() -> object:
     try:
         enrolled_students = Aluno.query.join(
@@ -108,6 +115,7 @@ def enrolled_students() -> object:
 
 
 @historic_blueprint.route("/historic/get_retention_rate/<int:year>", methods=["GET"])
+@jwt_required()
 def get_retention_rate(year: int):
     try:
         retained_query = Historico.query.filter(
@@ -141,6 +149,7 @@ def get_retention_rate(year: int):
 
 
 @historic_blueprint.route("/historic/get_global_approval_rate", methods=["GET"])
+@jwt_required()
 def get_global_approval_rate() -> object:
     try:
         approved_query = Historico.query.filter(
@@ -170,6 +179,7 @@ def get_global_approval_rate() -> object:
 
 
 @historic_blueprint.route("/historic/get_success_rate_year/<int:year>", methods=["GET"])
+@jwt_required()
 def get_success_rate_year(year: int) -> object:
     try:
         success_rate = 0
@@ -205,6 +215,7 @@ def get_success_rate_year(year: int) -> object:
 
 
 @historic_blueprint.route("/historic/get_abandonment_by_subject/<int:subject_id>", methods=["GET"])
+@jwt_required()
 def get_abandonment_by_subject(subject_id: int) -> object:
     try:
         subject = Disciplina.query.filter(Disciplina.id == subject_id)
@@ -244,6 +255,7 @@ def get_abandonment_by_subject(subject_id: int) -> object:
 
 
 @historic_blueprint.route('/historic/subjects_by_student', methods=["GET"])
+@jwt_required()
 def subjects_by_student() -> object:
     try:
         result = 0
@@ -280,6 +292,7 @@ def subjects_by_student() -> object:
 
 
 @historic_blueprint.route('/historic', methods=['POST'])
+@jwt_required()
 def create_historic() -> object:
     try:
         new_historic = Historico(request.json)
@@ -298,6 +311,7 @@ def create_historic() -> object:
 
 
 @historic_blueprint.route('/historic/<int:id>', methods=['PUT'])
+@jwt_required()
 def update_historic(id) -> object:
     try:
         historic = Historico.query.get(id)
@@ -327,6 +341,7 @@ def update_historic(id) -> object:
 
 
 @historic_blueprint.route('/historic/<int:id>', methods=["DELETE"])
+@jwt_required()
 def delete_historic(id) -> object:
     try:
         historic = Historico.query.get(id)

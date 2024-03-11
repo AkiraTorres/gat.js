@@ -6,12 +6,14 @@ from models.Disciplina import Disciplina
 from sqlalchemy import func
 from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from exceptions.Student.StudentAlreadyExistsException import StudentAlreadyExistsException
+from flask_jwt_extended import jwt_required
 
 # cria o blueprint do aluno
 student_blueprint = Blueprint('student', __name__)
 
 # rota para criar um aluno 
 @student_blueprint.route('/students', methods=['POST'])
+@jwt_required()
 def create_student() -> object:
     try:
         student_data = request.json
@@ -38,8 +40,9 @@ def create_student() -> object:
     return response
 
 
-#rota para listar todos os alunos 
+#rota para listar todos os alunos
 @student_blueprint.route("/students", methods=["GET"])
+@jwt_required()
 def list_students() -> object:
     try:
         students_list = Aluno.query.all()
@@ -54,6 +57,7 @@ def list_students() -> object:
 
 # encontrar aluno por id
 @student_blueprint.route("/students/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_student_by_cpf(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
@@ -75,6 +79,7 @@ def get_student_by_cpf(cpf: str) -> object:
 
 # Atualizar aluno por id
 @student_blueprint.route('/students/<string:cpf>', methods=['PUT'])
+@jwt_required()
 def update_student(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
@@ -105,6 +110,7 @@ def update_student(cpf: str) -> object:
 
 # Deletar aluno por id
 @student_blueprint.route('/students/<string:cpf>', methods=['DELETE'])
+@jwt_required()
 def delete_aluno_por_cpf(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
@@ -130,6 +136,7 @@ def delete_aluno_por_cpf(cpf: str) -> object:
 
 # Taxa de aproveitamento de créditos
 @student_blueprint.route("/students/credit/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_credits_rate(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
@@ -171,6 +178,7 @@ def get_credits_rate(cpf: str) -> object:
 
 
 @student_blueprint.route("/students/performance", methods=["GET"])
+@jwt_required()
 def performance() -> object:
     try:
         students = Aluno.query.all()
@@ -218,6 +226,7 @@ def performance() -> object:
 
   
 @student_blueprint.route("/students/subjects/electives/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_how_many_electives(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
@@ -255,6 +264,7 @@ def get_how_many_electives(cpf: str) -> object:
 
 
 @student_blueprint.route("/students/subjects/mandatory/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_how_many_mandatory(cpf: str) -> object:
     try:
         student = Aluno.query.get(cpf)
@@ -292,6 +302,7 @@ def get_how_many_mandatory(cpf: str) -> object:
 
 
 @student_blueprint.route("/students/performance/overall", methods=["GET"])
+@jwt_required()
 def get_overall_academic_performance() -> object:
     try:
         data = db.session.query(func.avg(Historico.nota).label('avg')).filter(Historico.nota != -999).all()
@@ -310,6 +321,7 @@ def get_overall_academic_performance() -> object:
 
 
 @student_blueprint.route("/students/conclusion_rate/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_student_conclusion_rate(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
@@ -342,6 +354,7 @@ def get_student_conclusion_rate(cpf: str) -> object:
     return response
 
 @student_blueprint.route("/students/fails/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_student_fails(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
@@ -375,6 +388,7 @@ def get_student_fails(cpf: str) -> object:
   
 # media dos alunos por componente curricular 
 @student_blueprint.route('/students/average/grade', methods=['GET'])
+@jwt_required()
 def get_average_grade() -> object:
     try:
         # coletar todas as disciplinas
@@ -419,6 +433,7 @@ def get_average_grade() -> object:
         
 
 @student_blueprint.route('/students/approved/<string:cpf>', methods=['GET'])
+@jwt_required()
 def get_student_approved_subjects(cpf: str) -> object:
     try:
         subjects = Disciplina.query.all()
@@ -451,6 +466,7 @@ def get_student_approved_subjects(cpf: str) -> object:
 
         
 @student_blueprint.route("/students/grade/distibution/<string:cpf>", methods=["GET"])
+@jwt_required()
 def get_student_grade_distribution(cpf: str) -> object:
     try:
         student = Aluno.query.filter(Aluno.cpf == cpf).first()
