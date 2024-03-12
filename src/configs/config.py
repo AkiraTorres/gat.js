@@ -15,7 +15,8 @@ DB_ENV = os.getenv("DB_ENV")
 class Config:
     DEBUG = False
     DEVELOPMENT = False
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_ENV}:{DB_PORT}/{DB_NAME}"
+    # SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_ENV}:{DB_PORT}/{DB_NAME}"
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@localhost/{DB_NAME}"
 
 
 class ProductionConfig(Config):

@@ -18,3 +18,4 @@ class TestFlaskBase(TestCase):
 
     def test_create_student(self):
         ...
+
