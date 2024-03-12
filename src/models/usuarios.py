@@ -10,6 +10,7 @@ class usuarios(db.Model):
     username = db.Column(db.String(length=100))
     email = db.Column(EmailType(), primary_key=True)
     senha = db.Column(db.String(length=100, collation='utf8'))
+    photo = db.Column(db.String(length=250), nullable=True)
     # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
