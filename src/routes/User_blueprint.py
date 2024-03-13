@@ -12,7 +12,7 @@ def admin_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
-        user = usuarios.query.filter(usuarios.username == current_user).first()
+        user = usuarios.query.filter(usuarios.email == current_user).first()
 
         if not user.is_admin:
             return jsonify({'message': 'Admins only!'}), 403
@@ -23,8 +23,8 @@ def admin_required(fn):
 
 
 @User_blueprint.route('/creat-user', methods=['POST'])
-# @jwt_required()
-# @admin_required
+@jwt_required()
+@admin_required
 def register_user():
     try:
         data = request.get_json()
@@ -58,10 +58,9 @@ def list_user_details():
 
         user_details = [{
             'username': detail[0],
-            # 'id': detail[1],
-            'is_admin': detail[2],
-            'email': detail[3],
-            'is_active': detail[4]
+            'is_admin': detail[1],
+            'email': detail[2],
+            'is_active': detail[3]
         } for detail in user_details]
 
         return make_response({'user_details': user_details}, 200)

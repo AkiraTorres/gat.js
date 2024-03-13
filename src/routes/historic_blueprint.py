@@ -1,4 +1,4 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request, make_response, jsonify
 from exceptions.Historic.HistoricNotFoundException import HistoricNotFoundException
 from exceptions.Student.StudentNotFoundException import StudentNotFoundException
 from models.db import db
@@ -178,12 +178,11 @@ def get_global_approval_rate() -> object:
     return response
 
 
+
 @historic_blueprint.route("/historic/get_success_rate_year/<int:year>", methods=["GET"])
 # @jwt_required()
 def get_success_rate_year(year: int) -> object:
     try:
-        success_rate = 0
-
         approved_query = Historico.query.filter(
             Historico.ano == year,
             (Historico.status == 1) | (Historico.status == 2)
@@ -202,13 +201,13 @@ def get_success_rate_year(year: int) -> object:
             "year": year,
             "total_students": total_students_query,
             "approved": approved_query,
-            "success_rate": success_rate
+            "success_rate": success_rate,
         }
 
-        response = make_response(response_data)
+        response = make_response(jsonify(response_data))
 
     except Exception as e:
-        response = make_response({"error": str(e)})
+        response = make_response(jsonify({"error": str(e)}))
         response.status_code = 500  # Internal Server Error
 
     return response

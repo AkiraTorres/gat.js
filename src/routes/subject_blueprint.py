@@ -13,7 +13,7 @@ subject_blueprint = Blueprint('subject', __name__)
 
 
 @subject_blueprint.route("/subjects", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def list_subjects() -> object:
     try:
         subjects_list = Disciplina.query.all()
@@ -27,10 +27,10 @@ def list_subjects() -> object:
 
 
 @subject_blueprint.route("/subjects/<int:subject_id>", methods=["PUT"])
-@jwt_required()
+# @jwt_required()
 def update_disciplina(subject_id: int) -> object:
     try:
-        # retornar a disciplina do banco de dados 
+        # retornar a disciplina do banco de dados
         subject = Disciplina.query.get(subject_id)
 
         if not subject:
@@ -44,7 +44,7 @@ def update_disciplina(subject_id: int) -> object:
         subject.nome = updated_data.get('nome', subject.nome)
         subject.tipo = updated_data.get('tipo', subject.tipo)
 
-        # subir pro banco de dados 
+        # subir pro banco de dados
         db.session.commit()
 
         response = make_response({"updated_subject": subject.to_json()})
@@ -61,7 +61,7 @@ def update_disciplina(subject_id: int) -> object:
 
 
 @subject_blueprint.route("/subjects", methods=["POST"])
-@jwt_required()
+# @jwt_required()
 def create_subject() -> object:
     try:
         # coletar os dados
@@ -93,7 +93,7 @@ def create_subject() -> object:
 
 
 @subject_blueprint.route("/subjects/<int:subject_id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def find_subject_by_id(subject_id) -> object:
     try:
         # procurar disciplina pelo no banco de dados 
@@ -117,7 +117,7 @@ def find_subject_by_id(subject_id) -> object:
   
 
 @subject_blueprint.route("/subjects/<int:subject_id>", methods=["DELETE"])
-@jwt_required()
+# @jwt_required()
 def delete_subject_by_id(subject_id: int) -> object:
     try:
         subject = Disciplina.query.get(subject_id)
@@ -141,7 +141,7 @@ def delete_subject_by_id(subject_id: int) -> object:
 
 
 @subject_blueprint.route("/subjects/most_failed/<int:year>/<int:semester>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_most_failed_subjects(year: int, semester: int) -> object:
     try:
         subjects_with_fails = db.session.query(
@@ -179,7 +179,7 @@ def get_most_failed_subjects(year: int, semester: int) -> object:
 
 
 @subject_blueprint.route("/subjects/rate/fails/<int:subject_id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_subject_fails_rate(subject_id: int) -> object:
     try:
         if not Disciplina.query.get(subject_id):
@@ -221,7 +221,7 @@ def get_subject_fails_rate(subject_id: int) -> object:
 
 #Média de Notas por Disciplina
 @subject_blueprint.route("/subjects/grade/average/<int:subject_id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_subject_average_grade(subject_id: int) -> object:
     try:
         if not Disciplina.query.get(subject_id):
@@ -262,7 +262,7 @@ def get_subject_average_grade(subject_id: int) -> object:
 
 # Taxa de retenção de alunos por disciplina
 @subject_blueprint.route("/subjects/rate/retention/<int:subject_id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_retention_rate_disciplina(subject_id: int) -> object:
     try:
         if not Disciplina.query.get(subject_id):
@@ -303,7 +303,7 @@ def get_retention_rate_disciplina(subject_id: int) -> object:
 
 
 @subject_blueprint.route("/subjects/students/failed_by_times/<int:subject_id>/<int:times>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_students_that_failed_more_than_times(subject_id: int, times: int) -> object:
     try:
         if not Disciplina.query.get(subject_id):
@@ -343,7 +343,7 @@ def get_students_that_failed_more_than_times(subject_id: int, times: int) -> obj
 
 
 @subject_blueprint.route("/subjects/average/credits", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_average_credits_by_subject() -> object:
     try:
         data = db.session.query(func.avg(Disciplina.credito).label('avg')).filter(Disciplina.credito != -999)
@@ -361,7 +361,7 @@ def get_average_credits_by_subject() -> object:
 
 
 @subject_blueprint.route("/subjects/average/workload", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_average_workload_by_subject() -> object:
     try:
         data = db.session.query(func.avg(Disciplina.carga_horaria).label('avg'))
@@ -380,7 +380,7 @@ def get_average_workload_by_subject() -> object:
   
 # Taxa de aprovacao por disciplina
 @subject_blueprint.route("/subject/approval/<int:subject_id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_approval_rate_disciplina(subject_id: int) -> object:
     try:
         if not Disciplina.query.get(subject_id):
@@ -421,7 +421,7 @@ def get_approval_rate_disciplina(subject_id: int) -> object:
 
 
 @subject_blueprint.route("/subjects/rate/attending_students", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_students_attending_subject_rate() -> object:
     try:
         #todas as disciplinas 
@@ -454,7 +454,7 @@ def get_students_attending_subject_rate() -> object:
 
 
 @subject_blueprint.route("/subjects/rate/total_abandonment", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_total_abandonment_rate() -> object:
     try:
         # Encontrar a quantidade total de alunos
@@ -484,7 +484,7 @@ def get_total_abandonment_rate() -> object:
 
     
 @subject_blueprint.route("/subjects/fails/<int:id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_fails_by_subject(id: int) -> object:
     try:
         if not Disciplina.query.get(id):
@@ -510,7 +510,7 @@ def get_fails_by_subject(id: int) -> object:
 
 
 @subject_blueprint.route("/subjects/approval/professor", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_approval_by_professor() -> object:
     try:
         # Encontrar todos os professores
@@ -565,7 +565,7 @@ def get_approval_by_professor() -> object:
     
     
 @subject_blueprint.route("/subjects/grade/distribution/<int:id>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_grade_distribution_by_subject(id: int) -> object:
     try:
         if not Disciplina.query.get(id):
@@ -601,7 +601,7 @@ def get_grade_distribution_by_subject(id: int) -> object:
     return response
 
 @subject_blueprint.route("/subjects/rate/graduate", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def graduation_rate():
     try:
         students = Aluno.query.all()
