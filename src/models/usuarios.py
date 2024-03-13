@@ -24,11 +24,12 @@ class usuarios(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def __init__(self, username, email, senha, is_admin=False):
+    def __init__(self, username, email, senha, photo=None, is_admin=False):
         # self.id = id
         self.username = username
         self.email = email
         self.senha = pbkdf2_sha256.hash(senha)
+        self.photo = photo
         self.is_admin = is_admin
 
     def gen_hash(self, senha):

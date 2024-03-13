@@ -63,18 +63,22 @@ def user():
 
     elif request.method == "POST":
         try:
-            data = request.get_json()
+            data = request.json
 
-            new_user = usuarios(
-                id=data.get("id"),
-                username=data.get("username"),
-                senha=data.get("senha"),
-                photo=data.get("photo", None),
-                email=data["email"],
-                is_admin=data.get("is_admin", False),
-            )
+            if data is None or data == {}:
+                raise Exception("Missing data", 400)
 
-            new_user.gen_hash(data.get("senha"))
+            if (
+                not data.get("username")
+                and not data.get("senha")
+                and not data.get("email")
+                and not data.get("photo")
+            ):
+                raise Exception("Missing data", 400)
+
+            new_user = usuarios(data.get("username"), data.get("email"), data.get("senha"), data.get("photo"))
+
+            # new_user.gen_hash(data.get("senha"))
 
             db.session.add(new_user)
             db.session.commit()
@@ -82,7 +86,7 @@ def user():
             return make_response({"message": "User created successfully"}, 201)
 
         except Exception as e:
-            status = e.args[1] if e.args[1] else 500
+            status = 500
             return make_response(
                 {
                     "message": "An error occurred while updating the user",
@@ -186,10 +190,10 @@ def user_parameter(email=None):
             )
 
 
-@User_blueprint.route("/listar-emails", methods=["GET"])
+@User_blueprint.route("/get-emails", methods=["GET"])
 @jwt_required()
 @admin_required
-def listar_emails():
+def get_emails():
     try:
         emails = usuarios.query.with_entities(usuarios.email).all()
         emails = [email[0] for email in emails]
@@ -198,23 +202,5 @@ def listar_emails():
     except Exception as e:
         return {
             "message": "An error occurred while listing emails",
-            "error": str(e),
-        }, 500
-
-
-@User_blueprint.route("/delete-user/<string:email>", methods=["DELETE"])
-@jwt_required()
-@admin_required
-def delete_usuaurio(email):
-    try:
-        user = usuarios.query.filter(usuarios.email == email).first()
-        db.session.delete(user)
-        db.session.commit()
-
-        return {"message": "User deleted successfully"}, 200
-
-    except Exception as e:
-        return {
-            "message": "An error occurred while deleting the user",
             "error": str(e),
         }, 500
