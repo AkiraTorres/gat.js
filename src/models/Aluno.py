@@ -1,24 +1,23 @@
 from models.db import db
 
-
 class Aluno(db.Model):
     __tablename__ = "aluno"
 
-    id = db.Column(db.Integer, primary_key=True)
+    # id = db.Column(db.Integer, primary_key=True)  # id do aluno removido
     nome = db.Column(db.String(60), nullable=False)
-    cpf = db.Column(db.String(14), nullable=False, unique=True)
+    cpf = db.Column(db.String(14), nullable=False, unique=True, primary_key=True)  # cpf como primary key, pois a bd foi alterado
     arg_class = db.Column(db.DECIMAL(5, 2), nullable=False)
     ano_entrada = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, nome, cpf, arg_class, ano_entrada):
-        self.nome = nome
-        self.cpf = cpf
-        self.arg_class = arg_class
-        self.ano_entrada = ano_entrada
+    def __init__(self, dados):
+        self.nome = dados.get("nome")
+        self.cpf = dados.get("cpf")
+        self.arg_class = dados.get("arg_class")
+        self.ano_entrada = dados.get("ano_entrada")
 
     def to_json(self) -> dict:
         return {
-            "id": self.id,
+            # "id": self.id,  # removido id do aluno
             "nome": self.nome,
             "cpf": self.cpf,
             "arg_class": self.arg_class,
