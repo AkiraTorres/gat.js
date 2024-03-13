@@ -78,7 +78,7 @@ def user():
 
             new_user = usuarios(data.get("username"), data.get("email"), data.get("senha"), data.get("photo"))
 
-            # new_user.gen_hash(data.get("senha"))
+            new_user.gen_hash(data.get("senha"))
 
             db.session.add(new_user)
             db.session.commit()
