@@ -1,9 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
 from flask import Flask, make_response
 from models.Professor import Professor
 from models.Disciplina import Disciplina
-from models.Historico import Historico
 from routes.professor_blueprint import professor_blueprint  # Import the blueprint
 from models.db import db
 

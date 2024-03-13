@@ -1,13 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from flask import Flask, make_response
-from models.Professor import Professor
-from models.Disciplina import Disciplina
-from models.Historico import Historico
+from flask import Flask
 from routes.student_blueprint import student_blueprint
-from models.Aluno import Aluno
-from sqlalchemy import func
-
 
 
 def test_create_student():
@@ -172,82 +165,6 @@ def test_performance():
     }
 
 
-# def test_get_how_many_electives():
-#     app = Flask(__name__)
-#     app.config['TESTING'] = True
-#     app.register_blueprint(student_blueprint)  # Register the blueprint
-#     client = app.test_client()
-#
-#     with app.app_context():
-#         with patch('models.Aluno.Aluno.query') as mock_query_aluno, patch('models.Disciplina.Disciplina.query') as mock_query_disciplina, patch('models.db.db.session') as mock_session:
-#             mock_student = MagicMock()
-#             mock_student.cpf = "111.757.432-57"
-#             mock_student.to_json.return_value = {"cpf": "111.757.432-57", "nome": "Test Student", "ano_entrada": 2022, "arg_class": None}
-#             mock_query_aluno.get.return_value = mock_student
-#
-#             mock_disciplina = MagicMock()
-#             mock_disciplina.to_json.return_value = {"id": 1, "nome": "Test Discipline", "tipo": 2}
-#             mock_query_disciplina.join.return_value.filter.return_value.all.return_value = [mock_disciplina]
-#
-#             response = client.get('/students/subjects/electives/111.757.432-57')
-#
-#     assert response.status_code == 200
-#     assert response.get_json() == {
-#         "cpf": "111.757.432-57",
-#         "nome": "Test Student",
-#         "ano_entrada": 2022,
-#         "arg_class": None,
-#         "subjects": [{"id": 1, "nome": "Test Discipline", "tipo": 2}]
-#     }
-
-
-# def test_get_how_many_mandatory():
-#     app = Flask(__name__)
-#     app.config['TESTING'] = True
-#     app.register_blueprint(student_blueprint)  # Register the blueprint
-#     client = app.test_client()
-#
-#     with app.app_context():
-#         with patch('models.Aluno.Aluno.query') as mock_query_aluno, patch('models.Disciplina.Disciplina.query') as mock_query_disciplina, patch('models.db.db.session') as mock_session:
-#             mock_student = MagicMock()
-#             mock_student.cpf = "111.757.432-57"
-#             mock_student.to_json.return_value = {"cpf": "111.757.432-57", "nome": "Test Student", "ano_entrada": 2022, "arg_class": None}
-#             mock_query_aluno.get.return_value = mock_student
-#
-#             mock_disciplina = MagicMock()
-#             mock_disciplina.to_json.return_value = {"id": 1, "nome": "Test Discipline", "tipo": 1}
-#             mock_query_disciplina.join.return_value.filter.return_value.all.return_value = [mock_disciplina]
-#
-#             response = client.get('/students/subjects/mandatory/111.757.432-57')
-#
-#     assert response.status_code == 200
-#     assert response.get_json() == {
-#         "cpf": "111.757.432-57",
-#         "nome": "Test Student",
-#         "ano_entrada": 2022,
-#         "arg_class": None,
-#         "subjects": [{"id": 1, "nome": "Test Discipline", "tipo": 1}]
-#     }
-
-#
-# def test_get_overall_academic_performance():
-#     app = Flask(__name__)
-#     app.config['TESTING'] = True
-#     app.register_blueprint(student_blueprint)  # Register the blueprint
-#     client = app.test_client()
-#
-#     with app.app_context():
-#         with patch('models.Historico.Historico.query') as mock_query_historico, \
-#                 patch('models.db.db.session.commit') as mock_session, \
-#                 patch('sqlalchemy.func', return_value=80) as mock_func:
-#             mock_query_historico.filter.return_value.all.return_value = [mock_func]
-#
-#             response = client.get('/students/performance/overall')
-#
-#     assert response.status_code == 200
-#     assert response.get_json() == {"overall_academic_performance": "80.00%"}
-
-
 def test_get_student_conclusion_rate():
     app = Flask(__name__)
     app.config['TESTING'] = True
@@ -368,3 +285,79 @@ def test_get_student_approved_subjects():
 #     assert response.get_json() == {
 #         "Grade distribution": 8.0
 #     }
+
+
+# def test_get_how_many_electives():
+#     app = Flask(__name__)
+#     app.config['TESTING'] = True
+#     app.register_blueprint(student_blueprint)  # Register the blueprint
+#     client = app.test_client()
+#
+#     with app.app_context():
+#         with patch('models.Aluno.Aluno.query') as mock_query_aluno, patch('models.Disciplina.Disciplina.query') as mock_query_disciplina, patch('models.db.db.session') as mock_session:
+#             mock_student = MagicMock()
+#             mock_student.cpf = "111.757.432-57"
+#             mock_student.to_json.return_value = {"cpf": "111.757.432-57", "nome": "Test Student", "ano_entrada": 2022, "arg_class": None}
+#             mock_query_aluno.get.return_value = mock_student
+#
+#             mock_disciplina = MagicMock()
+#             mock_disciplina.to_json.return_value = {"id": 1, "nome": "Test Discipline", "tipo": 2}
+#             mock_query_disciplina.join.return_value.filter.return_value.all.return_value = [mock_disciplina]
+#
+#             response = client.get('/students/subjects/electives/111.757.432-57')
+#
+#     assert response.status_code == 200
+#     assert response.get_json() == {
+#         "cpf": "111.757.432-57",
+#         "nome": "Test Student",
+#         "ano_entrada": 2022,
+#         "arg_class": None,
+#         "subjects": [{"id": 1, "nome": "Test Discipline", "tipo": 2}]
+#     }
+
+
+# def test_get_how_many_mandatory():
+#     app = Flask(__name__)
+#     app.config['TESTING'] = True
+#     app.register_blueprint(student_blueprint)  # Register the blueprint
+#     client = app.test_client()
+#
+#     with app.app_context():
+#         with patch('models.Aluno.Aluno.query') as mock_query_aluno, patch('models.Disciplina.Disciplina.query') as mock_query_disciplina, patch('models.db.db.session') as mock_session:
+#             mock_student = MagicMock()
+#             mock_student.cpf = "111.757.432-57"
+#             mock_student.to_json.return_value = {"cpf": "111.757.432-57", "nome": "Test Student", "ano_entrada": 2022, "arg_class": None}
+#             mock_query_aluno.get.return_value = mock_student
+#
+#             mock_disciplina = MagicMock()
+#             mock_disciplina.to_json.return_value = {"id": 1, "nome": "Test Discipline", "tipo": 1}
+#             mock_query_disciplina.join.return_value.filter.return_value.all.return_value = [mock_disciplina]
+#
+#             response = client.get('/students/subjects/mandatory/111.757.432-57')
+#
+#     assert response.status_code == 200
+#     assert response.get_json() == {
+#         "cpf": "111.757.432-57",
+#         "nome": "Test Student",
+#         "ano_entrada": 2022,
+#         "arg_class": None,
+#         "subjects": [{"id": 1, "nome": "Test Discipline", "tipo": 1}]
+#     }
+
+
+# def test_get_overall_academic_performance():
+#     app = Flask(__name__)
+#     app.config['TESTING'] = True
+#     app.register_blueprint(student_blueprint)  # Register the blueprint
+#     client = app.test_client()
+#
+#     with app.app_context():
+#         with patch('models.Historico.Historico.query') as mock_query_historico, \
+#                 patch('models.db.db.session.commit') as mock_session, \
+#                 patch('sqlalchemy.func', return_value=80) as mock_func:
+#             mock_query_historico.filter.return_value.all.return_value = [mock_func]
+#
+#             response = client.get('/students/performance/overall')
+#
+#     assert response.status_code == 200
+#     assert response.get_json() == {"overall_academic_performance": "80.00%"}
