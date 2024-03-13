@@ -40,3 +40,8 @@ $ flask --app ./src/app.py migrate upgrade
 ```bash
 $ flask --app ./src/app.py run
 ```
+
+### para rodar os testes devemos ir no diretório que está os arquivos de teste e colocar o seguinte comando
+```bash
+$ pytest .\historic_tests.py .\professor_tests.py .\student_tests.py .\subject_tests.py
+```

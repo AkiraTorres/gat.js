@@ -12,7 +12,7 @@ def admin_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         current_user = get_jwt_identity()
-        user = usuarios.query.filter(usuarios.username == current_user).first()
+        user = usuarios.query.filter(usuarios.email == current_user).first()
 
         if not user.is_admin:
             return jsonify({"message": "Admins only!"}), 403
@@ -21,8 +21,9 @@ def admin_required(fn):
 
     return wrapper
 
-
+  
 @User_blueprint.route("/user", methods=["GET", "POST"])
+@admin_required
 @jwt_required()
 def user():
     if request.method == "GET":
@@ -97,6 +98,7 @@ def user():
 
 
 @User_blueprint.route("/user/<string:email>", methods=["GET", "PUT", "DELETE"])
+@admin_required
 @jwt_required()
 def user_parameter(email=None):
     if request.method == "GET":
