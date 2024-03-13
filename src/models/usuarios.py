@@ -10,6 +10,7 @@ class usuarios(db.Model):
     username = db.Column(db.String(length=100))
     email = db.Column(EmailType(), primary_key=True)
     senha = db.Column(db.String(length=100, collation='utf8'))
+    photo = db.Column(db.String(length=250), nullable=True)
     # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
@@ -23,11 +24,12 @@ class usuarios(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def __init__(self, username, email, senha, is_admin=False):
+    def __init__(self, username, email, senha, photo=None, is_admin=False):
         # self.id = id
         self.username = username
         self.email = email
         self.senha = pbkdf2_sha256.hash(senha)
+        self.photo = photo
         self.is_admin = is_admin
 
     def gen_hash(self, senha):
