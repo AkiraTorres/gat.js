@@ -1,6 +1,5 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from flask import Flask, make_response
+from flask import Flask
 from models.Historico import Historico
 from models.Disciplina import Disciplina
 from models.Aluno import Aluno
