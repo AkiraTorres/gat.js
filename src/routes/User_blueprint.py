@@ -23,7 +23,7 @@ def admin_required(fn):
 
 
 @User_blueprint.route("/user", methods=["GET", "POST"])
-# @jwt_required()
+@jwt_required()
 def user():
     if request.method == "GET":
         try:
@@ -69,7 +69,7 @@ def user():
                 id=data.get("id"),
                 username=data.get("username"),
                 senha=data.get("senha"),
-                photo=data.get("photo"),
+                photo=data.get("photo", None),
                 email=data["email"],
                 is_admin=data.get("is_admin", False),
             )
