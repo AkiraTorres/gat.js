@@ -10,7 +10,7 @@ from flask_jwt_extended import jwt_required
 professor_blueprint = Blueprint("professor", __name__)
 
 @professor_blueprint.route("/professors", methods=['GET'])
-@jwt_required()
+# @jwt_required()
 def list_professors() -> object:
     try:
         results = []
@@ -36,14 +36,14 @@ def list_professors() -> object:
 
 
 @professor_blueprint.route("/professors/<string:cpf>", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def find_professor_by_cpf(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
 
         if not professor:
             raise ProfessorNotFoundException(cpf)
-            
+
         result = {
             "registration": professor.matricula,
             "name": professor.nome,
@@ -65,7 +65,7 @@ def find_professor_by_cpf(cpf: str) -> object:
 
 
 @professor_blueprint.route("/professors/<string:cpf>", methods=["PUT"])
-@jwt_required()
+# @jwt_required()
 def update_professor_by_cpf(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
@@ -99,7 +99,7 @@ def update_professor_by_cpf(cpf: str) -> object:
 
 
 @professor_blueprint.route("/professors/<string:cpf>", methods=["DELETE"])
-@jwt_required()
+# @jwt_required()
 def delete_professor_by_cpf(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
@@ -132,7 +132,7 @@ def delete_professor_by_cpf(cpf: str) -> object:
 
 
 @professor_blueprint.route("/professors", methods=["POST"])
-@jwt_required()
+# @jwt_required()
 def create_professor() -> object:
     try:
         new_professor_data = request.json
@@ -166,7 +166,7 @@ def create_professor() -> object:
 
 
 @professor_blueprint.route("/professors/<int:id_matricula>/total_workload", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def total_workload_professor(id_matricula: int) -> object:
     try:
         total_workload = db.session.query(db.func.sum(Disciplina.carga_horaria)).\
@@ -191,7 +191,7 @@ def total_workload_professor(id_matricula: int) -> object:
 
 # Taxa de desempenho por professor
 @professor_blueprint.route("/professors/<string:cpf>/performance_rate", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def professor_performance_rate(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
@@ -248,7 +248,7 @@ def professor_performance_rate(cpf: str) -> object:
 
 # Avaliação média do professor
 @professor_blueprint.route("/professors/<string:cpf>/evaluation", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def professor_evaluation(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
@@ -301,7 +301,7 @@ def professor_evaluation(cpf: str) -> object:
 
 
 @professor_blueprint.route("/professors/average_subjects", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_average_subjects_by_professor() -> object:
     try:
         total_subjects = 0
@@ -330,7 +330,7 @@ def get_average_subjects_by_professor() -> object:
 
 
 @professor_blueprint.route("/professors/<string:cpf>/subjects", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def get_professor_subjects(cpf: str) -> object:
     try:
         professor = Professor.query.filter(Professor.cpf == cpf).first()
@@ -355,5 +355,6 @@ def get_professor_subjects(cpf: str) -> object:
     except Exception as e:
         response = make_response({"error": str(e)})
         response.status_code = 500
+
 
     return response

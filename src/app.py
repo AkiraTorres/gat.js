@@ -15,7 +15,7 @@ from routes.User_blueprint import User_blueprint
 from routes.login_blueprint import login_blueprint
 
 api_cors_config = {
-    "origins": ["http://localhost:5173"]
+    "origins": ["http://localhost:5173", "*"]
 }
 
 app = Flask(__name__)
